@@ -34,6 +34,7 @@ struct ContentView: View {
     @EnvironmentObject private var panelState: PanelState
     @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.system.rawValue
     @State private var mode: BoardMode = .kanban
+    @State private var showingSettings = false
 
     private var appearanceMode: AppearanceMode {
         AppearanceMode(rawValue: appearanceModeRaw) ?? .system
@@ -80,6 +81,17 @@ struct ContentView: View {
                         .menuStyle(.borderlessButton)
                         .fixedSize()
                         .help("Appearance")
+
+                        Button {
+                            showingSettings = true
+                        } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Settings")
+                        .popover(isPresented: $showingSettings, arrowEdge: .bottom) {
+                            SettingsView()
+                        }
 
                         Button {
                             withAnimation(.easeInOut(duration: 0.2)) {

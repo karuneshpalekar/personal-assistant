@@ -2,7 +2,6 @@ import SwiftUI
 import AppKit
 import Combine
 import UserNotifications
-import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     var panel: FloatingPanel?
@@ -12,7 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        try? SMAppService.mainApp.register()
+        let launchAtLoginEnabled = UserDefaults.standard.object(forKey: "launchAtLoginEnabled") as? Bool ?? true
+        LaunchAtLogin.setEnabled(launchAtLoginEnabled)
 
         UNUserNotificationCenter.current().delegate = self
         NotificationManager.shared.requestAuthorization()
