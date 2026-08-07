@@ -32,7 +32,7 @@ struct BoardView: View {
                         .draggable(task.id.uuidString)
                 }
             }
-            .frame(maxHeight: .infinity, alignment: .top)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(8)
             .background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.08)))
             .dropDestination(for: String.self) { items, _ in
