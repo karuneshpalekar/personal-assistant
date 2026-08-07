@@ -4,7 +4,7 @@ import WidgetKit
 
 struct TaskEditView: View {
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var editor: EditorState
 
     let task: TaskItem?
 
@@ -48,6 +48,7 @@ struct TaskEditView: View {
                 }
                 Spacer()
                 Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
                 Button("Save", action: save)
                     .keyboardShortcut(.defaultAction)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -56,6 +57,10 @@ struct TaskEditView: View {
         .padding()
         .frame(width: 380)
         .onAppear(perform: load)
+    }
+
+    private func dismiss() {
+        editor.target = nil
     }
 
     private func load() {

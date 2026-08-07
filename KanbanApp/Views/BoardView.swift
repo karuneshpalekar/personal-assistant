@@ -5,7 +5,7 @@ import WidgetKit
 struct BoardView: View {
     @Query(sort: \TaskItem.sortOrder) private var tasks: [TaskItem]
     @Environment(\.modelContext) private var context
-    @State private var editingTask: TaskItem?
+    @EnvironmentObject private var editor: EditorState
 
     var body: some View {
         ScrollView(.horizontal) {
@@ -15,9 +15,6 @@ struct BoardView: View {
                 }
             }
             .padding()
-        }
-        .sheet(item: $editingTask) { task in
-            TaskEditView(task: task)
         }
     }
 
@@ -34,7 +31,7 @@ struct BoardView: View {
             VStack(spacing: 8) {
                 ForEach(tasks(for: status)) { task in
                     TaskCardView(task: task)
-                        .onTapGesture { editingTask = task }
+                        .onTapGesture { editor.target = .edit(task) }
                         .draggable(task.id.uuidString)
                 }
             }

@@ -8,41 +8,53 @@ enum BoardMode: String, CaseIterable, Identifiable {
 }
 
 struct ContentView: View {
+    @EnvironmentObject private var editor: EditorState
     @State private var mode: BoardMode = .kanban
-    @State private var showingNewTask = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Picker("", selection: $mode) {
-                    ForEach(BoardMode.allCases) { m in
-                        Text(m.rawValue).tag(m)
+        ZStack {
+            VStack(spacing: 0) {
+                HStack {
+                    Picker("", selection: $mode) {
+                        ForEach(BoardMode.allCases) { m in
+                            Text(m.rawValue).tag(m)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 220)
+
+                    Spacer()
+
+                    Button {
+                        editor.target = .new
+                    } label: {
+                        Label("New Task", systemImage: "plus")
                     }
                 }
-                .pickerStyle(.segmented)
-                .frame(width: 220)
+                .padding()
 
-                Spacer()
+                Divider()
 
-                Button {
-                    showingNewTask = true
-                } label: {
-                    Label("New Task", systemImage: "plus")
+                switch mode {
+                case .kanban:
+                    BoardView()
+                case .timeline:
+                    TimelineView()
                 }
             }
-            .padding()
 
-            Divider()
+            if let target = editor.target {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .onTapGesture { editor.target = nil }
+                    .transition(.opacity)
 
-            switch mode {
-            case .kanban:
-                BoardView()
-            case .timeline:
-                TimelineView()
+                TaskEditView(task: target.task)
+                    .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .windowBackgroundColor)))
+                    .shadow(radius: 20)
+                    .transition(.scale(scale: 0.96).combined(with: .opacity))
             }
         }
-        .sheet(isPresented: $showingNewTask) {
-            TaskEditView(task: nil)
-        }
+        .animation(.easeOut(duration: 0.15), value: editor.target?.id)
     }
 }
