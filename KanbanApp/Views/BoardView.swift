@@ -34,7 +34,7 @@ struct BoardView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(8)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.gray.opacity(0.08)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Theme.columnBackground))
             .dropDestination(for: String.self) { items, _ in
                 guard let idString = items.first,
                       let uuid = UUID(uuidString: idString),
@@ -73,15 +73,15 @@ struct TaskCardView: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Color(nsColor: .windowBackgroundColor)))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color.gray.opacity(0.2)))
+        .background(RoundedRectangle(cornerRadius: 8).fill(Theme.cardBackground))
+        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.cardBorder))
     }
 
     private var priorityColor: Color {
         switch task.priority {
-        case .low: return .green
-        case .medium: return .orange
-        case .high: return .red
+        case .low: return Theme.priorityLow
+        case .medium: return Theme.priorityMedium
+        case .high: return Theme.priorityHigh
         }
     }
 }

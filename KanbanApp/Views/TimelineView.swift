@@ -67,12 +67,12 @@ struct CalendarMonthView: View {
                                 .lineLimit(1)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(Color.accentColor.opacity(0.2)))
+                                .background(RoundedRectangle(cornerRadius: 4).fill(Theme.accent.opacity(0.18)))
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
                     .padding(4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.gray.opacity(0.06)))
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Theme.columnBackground))
                 }
             }
             .padding(.horizontal)

@@ -108,12 +108,14 @@ struct ContentView: View {
                         .onTapGesture { editor.target = nil }
 
                     TaskEditView(task: target.task)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .windowBackgroundColor)))
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Theme.cardBackground))
                         .shadow(radius: 20)
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Theme.panelBackground)
+        .tint(Theme.accent)
         .preferredColorScheme(appearanceMode.colorScheme)
     }
 }
@@ -137,7 +139,7 @@ struct CompactPillView: View {
         HStack(spacing: 10) {
             ZStack {
                 Circle()
-                    .fill(Color.accentColor.gradient)
+                    .fill(Theme.accent.gradient)
                     .frame(width: 34, height: 34)
                 Image(systemName: "square.grid.3x2.fill")
                     .font(.system(size: 14))
@@ -161,7 +163,7 @@ struct CompactPillView: View {
         .padding(.horizontal, 14)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.gray.opacity(0.15)))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardBorder))
         .contentShape(Rectangle())
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.2)) {
