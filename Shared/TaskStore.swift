@@ -36,11 +36,13 @@ final class TaskStore: ObservableObject {
             tasks.append(task)
         }
         save()
+        NotificationManager.shared.scheduleDeadlineAlert(for: task)
     }
 
     func delete(_ task: TaskItem) {
         tasks.removeAll { $0.id == task.id }
         save()
+        NotificationManager.shared.cancelDeadlineAlert(for: task)
     }
 
     func move(_ task: TaskItem, to status: ColumnStatus) {
@@ -49,5 +51,6 @@ final class TaskStore: ObservableObject {
         let maxOrder = tasks.filter { $0.status == status }.map(\.sortOrder).max() ?? 0
         tasks[idx].sortOrder = maxOrder + 1
         save()
+        NotificationManager.shared.scheduleDeadlineAlert(for: tasks[idx])
     }
 }
