@@ -32,25 +32,38 @@ Program membership, which this project intentionally avoids.
 ## Build & run
 
 ```bash
-./generate.sh
-open KanbanTimeline.xcodeproj
+./install.sh
 ```
 
-`generate.sh` runs `xcodegen generate` and then patches the project's
-`objectVersion`. XcodeGen 2.46+ writes the Xcode 16+ project format
-(`objectVersion = 77`), which crashes older Xcode (15.x) as soon as you open
-a target's Signing & Capabilities tab
-(`+[PBXProject _formatForMissingPreferredProjectFormatAttribute]:
-unrecognized selector`). The project doesn't use any features that require
-the newer format, so the script downgrades it to `56`. If you're on Xcode 16+
-you can just run `xcodegen generate` directly instead.
+This regenerates the project, builds a Release build, and installs it to
+`/Applications/KanbanTimeline.app`, then launches it. Re-run it any time
+you change the code. Look for the grid icon in the menu bar — the app has
+no dock icon or window at launch.
 
-Then in Xcode:
-1. Select the `KanbanTimeline` scheme.
-2. Build & run (`Cmd+R`) — no signing setup needed. The app has no dock icon
-   or window at launch — look for the grid icon in the menu bar.
-3. To add the widget: right-click the desktop → Edit Widgets → find
-   "Kanban Timeline" → drag it onto the desktop.
+To add the desktop widget: right-click the desktop → Edit Widgets → find
+"Kanban Timeline" → drag it onto the desktop. (It only shows up in the
+widget gallery once the app has been launched at least once from a stable
+path, which is why `install.sh` puts it in `/Applications` rather than
+leaving it in Xcode's DerivedData build folder.)
+
+### Why not just build & run from Xcode?
+
+On this project's original dev machine (Xcode 15.3, build 15E204a), Xcode's
+GUI crashes with an uncaught `NSInvalidArgumentException`
+(`+[PBXProject _formatForMissingPreferredProjectFormatAttribute]:
+unrecognized selector`) shortly after opening the project — reproduced
+across several different project configurations (with/without App Groups,
+with/without a signing Team, with matched/mismatched `objectVersion`), so
+it looks like a bug in that specific Xcode build rather than anything in
+this project. Building and running from the command line (what
+`install.sh` does) sidesteps the GUI entirely and works fine. If you're on
+a newer Xcode, you likely won't hit this — feel free to open
+`KanbanTimeline.xcodeproj` and use Xcode normally; `generate.sh` (used by
+`install.sh`) still runs `xcodegen generate` for you.
+
+You can still use Xcode's editor for writing code (autocomplete, jump-to-
+definition, etc. all work fine) — just build/run via `./install.sh` in a
+terminal instead of pressing Cmd+R, and avoid the Signing & Capabilities tab.
 
 ## Project layout
 
