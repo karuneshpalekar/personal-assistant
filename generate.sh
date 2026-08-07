@@ -11,6 +11,9 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 xcodegen generate
-sed -i '' 's/objectVersion = 77;/objectVersion = 56;/' KanbanTimeline.xcodeproj/project.pbxproj
+sed -i '' \
+  -e 's/objectVersion = 77;/objectVersion = 56;/' \
+  -e 's/preferredProjectObjectVersion = 77;/preferredProjectObjectVersion = 56;/' \
+  KanbanTimeline.xcodeproj/project.pbxproj
 
 echo "Generated KanbanTimeline.xcodeproj (objectVersion downgraded for Xcode 15.x compatibility)."
