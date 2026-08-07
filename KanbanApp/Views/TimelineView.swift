@@ -1,31 +1,10 @@
 import SwiftUI
 
-enum TimelineMode: String, CaseIterable, Identifiable {
-    case calendar = "Calendar"
-    case gantt = "Gantt"
-    var id: String { rawValue }
-}
-
 struct TimelineView: View {
-    @State private var timelineMode: TimelineMode = .calendar
     @State private var monthAnchor: Date = Date()
 
     var body: some View {
-        VStack(spacing: 0) {
-            Picker("", selection: $timelineMode) {
-                ForEach(TimelineMode.allCases) { Text($0.rawValue).tag($0) }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 180)
-            .padding([.horizontal, .top], 12)
-
-            switch timelineMode {
-            case .calendar:
-                CalendarMonthView(monthAnchor: $monthAnchor)
-            case .gantt:
-                GanttView()
-            }
-        }
+        CalendarMonthView(monthAnchor: $monthAnchor)
     }
 }
 
@@ -104,77 +83,5 @@ struct CalendarMonthView: View {
 
     private func shiftMonth(_ delta: Int) {
         monthAnchor = calendar.date(byAdding: .month, value: delta, to: monthAnchor) ?? monthAnchor
-    }
-}
-
-// MARK: - Gantt
-
-struct GanttView: View {
-    @EnvironmentObject private var store: TaskStore
-    private var tasks: [TaskItem] { store.tasks.sorted { ($0.startDate ?? .distantFuture) < ($1.startDate ?? .distantFuture) } }
-
-    private var scheduled: [TaskItem] {
-        tasks.filter { $0.startDate != nil || $0.dueDate != nil }
-    }
-
-    private var rangeStart: Date {
-        scheduled.compactMap { $0.startDate ?? $0.dueDate }.min() ?? Date()
-    }
-
-    private var totalDays: Int {
-        let end = scheduled.compactMap { $0.dueDate ?? $0.startDate }.max() ?? Date()
-        return max(1, Calendar.current.dateComponents([.day], from: rangeStart, to: end).day ?? 1) + 1
-    }
-
-    private let dayWidth: CGFloat = 24
-
-    var body: some View {
-        ScrollView([.horizontal, .vertical]) {
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(scheduled) { task in
-                    HStack(spacing: 0) {
-                        Text(task.title)
-                            .font(.caption)
-                            .frame(width: 140, alignment: .leading)
-                            .lineLimit(1)
-
-                        ZStack(alignment: .leading) {
-                            Capsule().fill(Color.gray.opacity(0.1))
-                                .frame(width: CGFloat(totalDays) * dayWidth, height: 18)
-
-                            Capsule()
-                                .fill(barColor(task))
-                                .frame(width: barWidth(task), height: 18)
-                                .offset(x: barOffset(task))
-                        }
-                    }
-                }
-            }
-            .padding()
-        }
-    }
-
-    private func dayOffset(_ date: Date) -> Int {
-        Calendar.current.dateComponents([.day], from: rangeStart, to: date).day ?? 0
-    }
-
-    private func barOffset(_ task: TaskItem) -> CGFloat {
-        let start = task.startDate ?? task.dueDate ?? rangeStart
-        return CGFloat(max(0, dayOffset(start))) * dayWidth
-    }
-
-    private func barWidth(_ task: TaskItem) -> CGFloat {
-        let start = task.startDate ?? task.dueDate ?? rangeStart
-        let end = task.dueDate ?? task.startDate ?? start
-        let days = max(1, (Calendar.current.dateComponents([.day], from: start, to: end).day ?? 0) + 1)
-        return CGFloat(days) * dayWidth
-    }
-
-    private func barColor(_ task: TaskItem) -> Color {
-        switch task.priority {
-        case .low: return .green
-        case .medium: return .orange
-        case .high: return .red
-        }
     }
 }
