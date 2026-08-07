@@ -27,9 +27,18 @@ All data is local — no accounts, no network calls.
 ## Build & run
 
 ```bash
-xcodegen generate
+./generate.sh
 open KanbanTimeline.xcodeproj
 ```
+
+`generate.sh` runs `xcodegen generate` and then patches the project's
+`objectVersion`. XcodeGen 2.46+ writes the Xcode 16+ project format
+(`objectVersion = 77`), which crashes older Xcode (15.x) as soon as you open
+a target's Signing & Capabilities tab
+(`+[PBXProject _formatForMissingPreferredProjectFormatAttribute]:
+unrecognized selector`). The project doesn't use any features that require
+the newer format, so the script downgrades it to `56`. If you're on Xcode 16+
+you can just run `xcodegen generate` directly instead.
 
 Then in Xcode:
 1. Select the `KanbanTimeline` scheme.
