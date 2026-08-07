@@ -2,11 +2,14 @@ import SwiftUI
 import AppKit
 
 /// An NSPanel that behaves like a persistent desktop widget: floats above
-/// normal windows, doesn't steal focus from whatever you're doing, and can
-/// be dragged anywhere by its background. Deliberately does NOT use
-/// `.canJoinAllSpaces` or `.fullScreenAuxiliary` — it should stay put on
-/// whichever desktop Space it was opened on, not follow you to other
-/// Spaces or bleed into other apps' full-screen mode.
+/// normal windows and doesn't steal focus from whatever you're doing.
+/// Deliberately does NOT use `.canJoinAllSpaces` or `.fullScreenAuxiliary`
+/// — it should stay put on whichever desktop Space it was opened on, not
+/// follow you to other Spaces or bleed into other apps' full-screen mode.
+/// Also deliberately does NOT use isMovableByWindowBackground — that made
+/// the whole panel drag around when trying to drag a task card between
+/// columns. Repositioning the panel is done via DragHandle, applied only
+/// to the toolbar header.
 final class FloatingPanel: NSPanel {
     static let expandedSize = NSSize(width: 900, height: 640)
     static let collapsedSize = NSSize(width: 280, height: 72)
@@ -24,7 +27,7 @@ final class FloatingPanel: NSPanel {
         collectionBehavior = [.stationary]
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
-        isMovableByWindowBackground = true
+        isMovableByWindowBackground = false
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
         standardWindowButton(.zoomButton)?.isHidden = true

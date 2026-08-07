@@ -92,6 +92,7 @@ struct ContentView: View {
                         .help("Collapse to a compact pill")
                     }
                     .padding()
+                    .background(DragHandle())
 
                     Divider()
 
