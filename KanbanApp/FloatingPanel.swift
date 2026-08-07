@@ -2,10 +2,11 @@ import SwiftUI
 import AppKit
 
 /// An NSPanel that behaves like a persistent desktop widget: floats above
-/// normal windows on your regular desktop Spaces, doesn't steal focus from
-/// whatever you're doing, and can be dragged anywhere by its background.
-/// Deliberately does NOT use `.fullScreenAuxiliary` — it should stay on the
-/// normal desktop, not bleed into other apps' full-screen mode.
+/// normal windows, doesn't steal focus from whatever you're doing, and can
+/// be dragged anywhere by its background. Deliberately does NOT use
+/// `.canJoinAllSpaces` or `.fullScreenAuxiliary` — it should stay put on
+/// whichever desktop Space it was opened on, not follow you to other
+/// Spaces or bleed into other apps' full-screen mode.
 final class FloatingPanel: NSPanel {
     init(contentView: some View) {
         super.init(
@@ -17,7 +18,7 @@ final class FloatingPanel: NSPanel {
 
         isFloatingPanel = true
         level = .floating
-        collectionBehavior = [.canJoinAllSpaces, .stationary]
+        collectionBehavior = [.stationary]
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
         isMovableByWindowBackground = true
