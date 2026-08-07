@@ -13,7 +13,7 @@ cd "$(dirname "$0")"
 ./generate.sh
 
 xcodebuild -project KanbanTimeline.xcodeproj -scheme KanbanTimeline \
-  -configuration Release -destination 'platform=macOS' build
+  -configuration Release -destination 'platform=macOS' -allowProvisioningUpdates build
 
 APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -iname 'KanbanTimeline-*' -print -quit)/Build/Products/Release/KanbanTimeline.app
 

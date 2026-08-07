@@ -11,8 +11,8 @@ settings:
     SWIFT_VERSION: "5.0"
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     CODE_SIGN_STYLE: Automatic
-    CODE_SIGN_IDENTITY: "-"
-    CODE_SIGNING_REQUIRED: NO
+    DEVELOPMENT_TEAM: 7M9QHX569W
+    CODE_SIGNING_REQUIRED: YES
     CODE_SIGNING_ALLOWED: YES
 
 targets:
@@ -26,41 +26,19 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.karunesh.kanbantimeline.app
         PRODUCT_NAME: KanbanTimeline
-        ENABLE_HARDENED_RUNTIME: true
+        ENABLE_HARDENED_RUNTIME: false
     info:
       path: KanbanApp/Info.plist
       properties:
         CFBundleDisplayName: Kanban Timeline
         LSUIElement: true
         NSHumanReadableCopyright: ""
-    dependencies:
-      - target: KanbanWidgetExtension
-        embed: true
-
-  KanbanWidgetExtension:
-    type: app-extension
-    platform: macOS
-    sources:
-      - path: KanbanWidget
-      - path: Shared
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.karunesh.kanbantimeline.app.widget
-        PRODUCT_NAME: KanbanWidgetExtension
-        ENABLE_HARDENED_RUNTIME: true
-    info:
-      path: KanbanWidget/Info.plist
-      properties:
-        CFBundleDisplayName: Kanban Timeline Widget
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
 
 schemes:
   KanbanTimeline:
     build:
       targets:
         KanbanApp: all
-        KanbanWidgetExtension: all
     run:
       config: Debug
     archive:

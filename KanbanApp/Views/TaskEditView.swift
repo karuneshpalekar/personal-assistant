@@ -56,7 +56,6 @@ struct TaskEditView: View {
         }
         .padding()
         .frame(width: 380)
-        .background(KeyWindowFinder())
         .onAppear {
             load()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

@@ -1,17 +1,19 @@
 import SwiftUI
+import AppKit
 
 @main
 struct KanbanTimelineApp: App {
-    @StateObject private var editorState = EditorState()
-    @StateObject private var taskStore = TaskStore()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
         MenuBarExtra("Kanban Timeline", systemImage: "square.grid.3x2") {
-            ContentView()
-                .frame(width: 820, height: 560)
-                .environmentObject(editorState)
-                .environmentObject(taskStore)
+            Button("Show/Hide Board") {
+                appDelegate.togglePanel()
+            }
+            Divider()
+            Button("Quit") {
+                NSApp.terminate(nil)
+            }
         }
-        .menuBarExtraStyle(.window)
     }
 }
