@@ -35,17 +35,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         let panel = FloatingPanel(contentView: content)
         if let screen = NSScreen.main {
-            let origin = NSPoint(
-                x: screen.visibleFrame.maxX - panel.frame.width - 24,
-                y: screen.visibleFrame.maxY - panel.frame.height - 24
-            )
-            panel.setFrameOrigin(origin)
+            if let saved = FloatingPanel.savedFrame(fittingIn: screen.visibleFrame) {
+                panel.setFrame(saved, display: false)
+            } else {
+                let origin = NSPoint(
+                    x: screen.visibleFrame.maxX - panel.frame.width - 24,
+                    y: screen.visibleFrame.maxY - panel.frame.height - 24
+                )
+                panel.setFrameOrigin(origin)
+            }
+        }
+        if panelState.isCollapsed {
+            panel.setCollapsed(true)
         }
         panel.orderFrontRegardless()
+        panel.frameTrackingEnabled = true
         self.panel = panel
 
         panelState.$isCollapsed
             .removeDuplicates()
+            .dropFirst()
             .sink { [weak panel] collapsed in
                 panel?.setCollapsed(collapsed)
             }
@@ -65,6 +74,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .sound])
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        defer { completionHandler() }
+
+        guard let taskIdString = response.notification.request.content.userInfo[NotificationAction.taskIdKey] as? String,
+              let taskId = UUID(uuidString: taskIdString),
+              let task = taskStore.tasks.first(where: { $0.id == taskId }) else { return }
+
+        switch response.actionIdentifier {
+        case NotificationAction.snooze:
+            NotificationManager.shared.snoozeDeadlineAlert(taskId: taskId, taskTitle: task.title)
+        case NotificationAction.markDone:
+            var updated = task
+            updated.status = .done
+            taskStore.upsert(updated)
+        default:
+            break
+        }
     }
 
     func togglePanel() {
