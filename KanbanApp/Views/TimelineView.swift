@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 enum TimelineMode: String, CaseIterable, Identifiable {
     case calendar = "Calendar"
@@ -34,7 +33,8 @@ struct TimelineView: View {
 
 struct CalendarMonthView: View {
     @Binding var monthAnchor: Date
-    @Query private var tasks: [TaskItem]
+    @EnvironmentObject private var store: TaskStore
+    private var tasks: [TaskItem] { store.tasks }
 
     private var calendar: Calendar { Calendar.current }
 
@@ -110,7 +110,8 @@ struct CalendarMonthView: View {
 // MARK: - Gantt
 
 struct GanttView: View {
-    @Query(sort: \TaskItem.startDate) private var tasks: [TaskItem]
+    @EnvironmentObject private var store: TaskStore
+    private var tasks: [TaskItem] { store.tasks.sorted { ($0.startDate ?? .distantFuture) < ($1.startDate ?? .distantFuture) } }
 
     private var scheduled: [TaskItem] {
         tasks.filter { $0.startDate != nil || $0.dueDate != nil }

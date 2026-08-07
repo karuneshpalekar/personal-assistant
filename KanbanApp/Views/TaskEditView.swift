@@ -1,9 +1,7 @@
 import SwiftUI
-import SwiftData
-import WidgetKit
 
 struct TaskEditView: View {
-    @Environment(\.modelContext) private var context
+    @EnvironmentObject private var store: TaskStore
     @EnvironmentObject private var editor: EditorState
 
     let task: TaskItem?
@@ -82,24 +80,20 @@ struct TaskEditView: View {
     }
 
     private func save() {
-        let target = task ?? TaskItem(title: title)
-        if task == nil { context.insert(target) }
+        var target = task ?? TaskItem(title: title)
         target.title = title
         target.notes = notes
         target.status = status
         target.priority = priority
         target.startDate = hasStartDate ? startDate : nil
         target.dueDate = hasDueDate ? dueDate : nil
-        try? context.save()
-        WidgetCenter.shared.reloadAllTimelines()
+        store.upsert(target)
         dismiss()
     }
 
     private func delete() {
         guard let task else { return }
-        context.delete(task)
-        try? context.save()
-        WidgetCenter.shared.reloadAllTimelines()
+        store.delete(task)
         dismiss()
     }
 }

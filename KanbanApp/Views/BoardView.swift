@@ -1,10 +1,7 @@
 import SwiftUI
-import SwiftData
-import WidgetKit
 
 struct BoardView: View {
-    @Query(sort: \TaskItem.sortOrder) private var tasks: [TaskItem]
-    @Environment(\.modelContext) private var context
+    @EnvironmentObject private var store: TaskStore
     @EnvironmentObject private var editor: EditorState
 
     var body: some View {
@@ -19,7 +16,7 @@ struct BoardView: View {
     }
 
     private func tasks(for status: ColumnStatus) -> [TaskItem] {
-        tasks.filter { $0.status == status }
+        store.tasks.filter { $0.status == status }.sorted { $0.sortOrder < $1.sortOrder }
     }
 
     private func columnView(for status: ColumnStatus) -> some View {
@@ -41,11 +38,8 @@ struct BoardView: View {
             .dropDestination(for: String.self) { items, _ in
                 guard let idString = items.first,
                       let uuid = UUID(uuidString: idString),
-                      let dropped = self.tasks.first(where: { $0.id == uuid }) else { return false }
-                dropped.status = status
-                dropped.sortOrder = (tasks(for: status).map(\.sortOrder).max() ?? 0) + 1
-                try? context.save()
-                WidgetCenter.shared.reloadAllTimelines()
+                      let dropped = store.tasks.first(where: { $0.id == uuid }) else { return false }
+                store.move(dropped, to: status)
                 return true
             }
         }

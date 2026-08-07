@@ -7,6 +7,6 @@ enum SharedStorage {
         if !FileManager.default.fileExists(atPath: dir.path) {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
-        return dir.appendingPathComponent("KanbanTimeline.sqlite")
+        return dir.appendingPathComponent("tasks.json")
     }
 }

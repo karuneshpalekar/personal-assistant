@@ -1,5 +1,4 @@
 import SwiftUI
-import SwiftData
 
 enum BoardMode: String, CaseIterable, Identifiable {
     case kanban = "Board"

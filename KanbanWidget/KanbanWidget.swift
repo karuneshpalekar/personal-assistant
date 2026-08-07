@@ -1,6 +1,5 @@
 import WidgetKit
 import SwiftUI
-import SwiftData
 
 struct TaskSnapshot: Identifiable {
     let id: UUID
@@ -32,13 +31,8 @@ struct KanbanProvider: TimelineProvider {
     }
 
     private func fetchUpcoming() -> [TaskSnapshot] {
-        let context = ModelContext(PersistenceController.shared)
-        let descriptor = FetchDescriptor<TaskItem>(
-            predicate: #Predicate { $0.statusRaw != "Done" },
-            sortBy: [SortDescriptor(\.dueDate)]
-        )
-        let items = (try? context.fetch(descriptor)) ?? []
-        return items
+        TaskStore.loadTasks()
+            .filter { $0.status != .done }
             .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
             .prefix(6)
             .map { TaskSnapshot(id: $0.id, title: $0.title, dueDate: $0.dueDate, priority: $0.priority) }
