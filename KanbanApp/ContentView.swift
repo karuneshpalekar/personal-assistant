@@ -66,10 +66,7 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(
-            width: panelState.isCollapsed ? FloatingPanel.collapsedSize.width : FloatingPanel.expandedSize.width,
-            height: panelState.isCollapsed ? FloatingPanel.collapsedSize.height : FloatingPanel.expandedSize.height
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
