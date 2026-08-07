@@ -12,7 +12,9 @@ struct ContentView: View {
     @State private var mode: BoardMode = .kanban
 
     var body: some View {
-        ZStack {
+        if let target = editor.target {
+            TaskEditView(task: target.task)
+        } else {
             VStack(spacing: 0) {
                 HStack {
                     Picker("", selection: $mode) {
@@ -42,19 +44,6 @@ struct ContentView: View {
                     TimelineView()
                 }
             }
-
-            if let target = editor.target {
-                Color.black.opacity(0.25)
-                    .ignoresSafeArea()
-                    .onTapGesture { editor.target = nil }
-                    .transition(.opacity)
-
-                TaskEditView(task: target.task)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color(nsColor: .windowBackgroundColor)))
-                    .shadow(radius: 20)
-                    .transition(.scale(scale: 0.96).combined(with: .opacity))
-            }
         }
-        .animation(.easeOut(duration: 0.15), value: editor.target?.id)
     }
 }
