@@ -8,6 +8,7 @@ struct TaskEditView: View {
 
     let task: TaskItem?
 
+    @FocusState private var titleFocused: Bool
     @State private var title: String = ""
     @State private var notes: String = ""
     @State private var status: ColumnStatus = .backlog
@@ -20,6 +21,7 @@ struct TaskEditView: View {
     var body: some View {
         Form {
             TextField("Title", text: $title)
+                .focused($titleFocused)
             TextField("Notes", text: $notes, axis: .vertical)
                 .lineLimit(3...6)
 
@@ -56,7 +58,13 @@ struct TaskEditView: View {
         }
         .padding()
         .frame(width: 380)
-        .onAppear(perform: load)
+        .background(KeyWindowFinder())
+        .onAppear {
+            load()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                titleFocused = true
+            }
+        }
     }
 
     private func dismiss() {
