@@ -13,10 +13,15 @@ your upcoming tasks at a glance.
   (small/medium/large) to see your next few upcoming tasks without opening
   the app.
 - **Shared** — SwiftData model (`TaskItem`) and the shared persistence layer.
-  Both targets read/write the same store via an **App Group** container, so
-  the widget always reflects what's in the app.
+  Both targets read/write the same SQLite file in
+  `~/Library/Application Support/KanbanTimeline/`, so the widget always
+  reflects what's in the app.
 
-All data is local — no accounts, no network calls.
+All data is local — no accounts, no network calls. Neither target is
+sandboxed and both are signed "to run locally" (`CODE_SIGN_IDENTITY: -`), so
+no Apple Developer account is required — App Groups (the sandboxed way to
+share data between an app and its extensions) need a paid Apple Developer
+Program membership, which this project intentionally avoids.
 
 ## Requirements
 
@@ -42,11 +47,9 @@ you can just run `xcodegen generate` directly instead.
 
 Then in Xcode:
 1. Select the `KanbanTimeline` scheme.
-2. Set your Development Team on both the `KanbanApp` and `KanbanWidgetExtension`
-   targets (Signing & Capabilities) — required for App Group entitlements to work.
-3. Build & run (`Cmd+R`). The app has no dock icon or window at launch — look
-   for the grid icon in the menu bar.
-4. To add the widget: right-click the desktop → Edit Widgets → find
+2. Build & run (`Cmd+R`) — no signing setup needed. The app has no dock icon
+   or window at launch — look for the grid icon in the menu bar.
+3. To add the widget: right-click the desktop → Edit Widgets → find
    "Kanban Timeline" → drag it onto the desktop.
 
 ## Project layout
@@ -64,7 +67,7 @@ KanbanWidget/          WidgetKit extension target
   KanbanWidget.swift        TimelineProvider + widget views
 Shared/                shared between both targets
   TaskItem.swift            SwiftData model
-  AppGroup.swift             App Group container id/URL
+  SharedStorage.swift        shared store file location
   PersistenceController.swift  shared ModelContainer
 project.yml            XcodeGen project spec
 ```
