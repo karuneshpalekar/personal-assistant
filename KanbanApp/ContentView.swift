@@ -6,10 +6,38 @@ enum BoardMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
+enum AppearanceMode: String, CaseIterable, Identifiable {
+    case system = "System"
+    case light = "Light"
+    case dark = "Dark"
+    var id: String { rawValue }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max.fill"
+        case .dark: return "moon.fill"
+        }
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject private var editor: EditorState
     @EnvironmentObject private var panelState: PanelState
+    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.system.rawValue
     @State private var mode: BoardMode = .kanban
+
+    private var appearanceMode: AppearanceMode {
+        AppearanceMode(rawValue: appearanceModeRaw) ?? .system
+    }
 
     var body: some View {
         ZStack {
@@ -33,6 +61,25 @@ struct ContentView: View {
                         } label: {
                             Label("New Task", systemImage: "plus")
                         }
+
+                        Menu {
+                            ForEach(AppearanceMode.allCases) { mode in
+                                Button {
+                                    appearanceModeRaw = mode.rawValue
+                                } label: {
+                                    if mode == appearanceMode {
+                                        Label(mode.rawValue, systemImage: "checkmark")
+                                    } else {
+                                        Text(mode.rawValue)
+                                    }
+                                }
+                            }
+                        } label: {
+                            Image(systemName: appearanceMode.icon)
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                        .help("Appearance")
 
                         Button {
                             withAnimation(.easeInOut(duration: 0.2)) {
@@ -67,6 +114,7 @@ struct ContentView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .preferredColorScheme(appearanceMode.colorScheme)
     }
 }
 
