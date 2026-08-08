@@ -24,5 +24,9 @@
 	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud.</string>
 </dict>
 </plist>

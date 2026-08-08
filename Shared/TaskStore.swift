@@ -29,6 +29,10 @@ final class TaskStore: ObservableObject {
         try? data.write(to: fileURL, options: .atomic)
     }
 
+    private var remindersSyncEnabled: Bool {
+        UserDefaults.standard.bool(forKey: "remindersSyncEnabled")
+    }
+
     func upsert(_ task: TaskItem) {
         let finalTask = advanceIfRecurring(task)
         if let idx = tasks.firstIndex(where: { $0.id == finalTask.id }) {
@@ -38,12 +42,18 @@ final class TaskStore: ObservableObject {
         }
         save()
         NotificationManager.shared.scheduleDeadlineAlert(for: finalTask)
+        if remindersSyncEnabled {
+            RemindersSync.shared.sync(finalTask)
+        }
     }
 
     func delete(_ task: TaskItem) {
         tasks.removeAll { $0.id == task.id }
         save()
         NotificationManager.shared.cancelDeadlineAlert(for: task)
+        if remindersSyncEnabled {
+            RemindersSync.shared.remove(task)
+        }
     }
 
     func move(_ task: TaskItem, to status: ColumnStatus) {
@@ -54,6 +64,9 @@ final class TaskStore: ObservableObject {
         tasks[idx] = advanceIfRecurring(tasks[idx])
         save()
         NotificationManager.shared.scheduleDeadlineAlert(for: tasks[idx])
+        if remindersSyncEnabled {
+            RemindersSync.shared.sync(tasks[idx])
+        }
     }
 
     /// If a recurring task is marked Done, roll it forward to its next

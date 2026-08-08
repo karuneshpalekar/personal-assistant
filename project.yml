@@ -33,6 +33,8 @@ targets:
         CFBundleDisplayName: Kanban Timeline
         LSUIElement: true
         NSHumanReadableCopyright: ""
+        NSRemindersFullAccessUsageDescription: "Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud."
+        NSRemindersUsageDescription: "Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud."
 
 schemes:
   KanbanTimeline:
