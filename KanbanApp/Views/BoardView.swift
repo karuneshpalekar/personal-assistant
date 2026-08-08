@@ -196,6 +196,12 @@ struct TaskCardView: View {
                 .font(.caption2)
                 .foregroundStyle(isMissed ? Theme.priorityHigh : .secondary)
             }
+
+            if let minutes = task.estimatedMinutes {
+                Label(minutes.formattedAsDuration, systemImage: "clock")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)

@@ -66,6 +66,8 @@ struct TaskItem: Identifiable, Codable, Equatable {
     var sortOrder: Int
     var createdAt: Date
     var recurrence: RecurrenceRule
+    /// Estimated time to complete, in minutes. Nil means no estimate set.
+    var estimatedMinutes: Int?
 
     init(
         id: UUID = UUID(),
@@ -77,7 +79,8 @@ struct TaskItem: Identifiable, Codable, Equatable {
         dueDate: Date? = nil,
         sortOrder: Int = 0,
         createdAt: Date = Date(),
-        recurrence: RecurrenceRule = .none
+        recurrence: RecurrenceRule = .none,
+        estimatedMinutes: Int? = nil
     ) {
         self.id = id
         self.title = title
@@ -89,10 +92,12 @@ struct TaskItem: Identifiable, Codable, Equatable {
         self.sortOrder = sortOrder
         self.createdAt = createdAt
         self.recurrence = recurrence
+        self.estimatedMinutes = estimatedMinutes
     }
 
-    // Custom decoding so tasks saved before `recurrence` existed still load
-    // (plain Codable synthesis would fail on the missing key otherwise).
+    // Custom decoding so tasks saved before `recurrence`/`estimatedMinutes`
+    // existed still load (plain Codable synthesis would fail on missing
+    // keys otherwise).
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         id = try container.decode(UUID.self, forKey: .id)
@@ -105,5 +110,17 @@ struct TaskItem: Identifiable, Codable, Equatable {
         sortOrder = try container.decode(Int.self, forKey: .sortOrder)
         createdAt = try container.decode(Date.self, forKey: .createdAt)
         recurrence = try container.decodeIfPresent(RecurrenceRule.self, forKey: .recurrence) ?? .none
+        estimatedMinutes = try container.decodeIfPresent(Int.self, forKey: .estimatedMinutes)
+    }
+}
+
+extension Int {
+    /// Formats a minute count as "1h 30m" / "1h" / "45m".
+    var formattedAsDuration: String {
+        let h = self / 60
+        let m = self % 60
+        if h > 0 && m > 0 { return "\(h)h \(m)m" }
+        if h > 0 { return "\(h)h" }
+        return "\(m)m"
     }
 }

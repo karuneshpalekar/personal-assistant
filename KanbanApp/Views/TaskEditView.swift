@@ -16,6 +16,9 @@ struct TaskEditView: View {
     @State private var dueDate: Date = Date()
     @State private var hasDueDate = true
     @State private var recurrence: RecurrenceRule = .none
+    @State private var hasEstimate = false
+    @State private var estimateHours = 0
+    @State private var estimateMinutes = 0
 
     var body: some View {
         Form {
@@ -44,6 +47,14 @@ struct TaskEditView: View {
 
                 Picker("Repeat", selection: $recurrence) {
                     ForEach(RecurrenceRule.allCases) { Text($0.rawValue).tag($0) }
+                }
+            }
+
+            Toggle("Time required", isOn: $hasEstimate)
+            if hasEstimate {
+                HStack {
+                    Stepper("\(estimateHours) hr", value: $estimateHours, in: 0...24)
+                    Stepper("\(estimateMinutes) min", value: $estimateMinutes, in: 0...55, step: 5)
                 }
             }
 
@@ -82,6 +93,11 @@ struct TaskEditView: View {
         if let s = task.startDate { hasStartDate = true; startDate = s }
         if let d = task.dueDate { hasDueDate = true; dueDate = d }
         recurrence = task.recurrence
+        if let minutes = task.estimatedMinutes {
+            hasEstimate = true
+            estimateHours = minutes / 60
+            estimateMinutes = minutes % 60
+        }
     }
 
     private func save() {
@@ -93,6 +109,8 @@ struct TaskEditView: View {
         target.startDate = hasStartDate ? startDate : nil
         target.dueDate = hasDueDate ? dueDate : nil
         target.recurrence = hasDueDate ? recurrence : .none
+        let totalMinutes = estimateHours * 60 + estimateMinutes
+        target.estimatedMinutes = (hasEstimate && totalMinutes > 0) ? totalMinutes : nil
         store.upsert(target)
         dismiss()
     }
