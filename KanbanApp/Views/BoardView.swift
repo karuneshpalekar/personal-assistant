@@ -38,6 +38,9 @@ struct BoardView: View {
     @EnvironmentObject private var store: TaskStore
     @EnvironmentObject private var editor: EditorState
 
+    var searchText: String = ""
+    var priorityFilter: TaskPriority? = nil
+
     var body: some View {
         ScrollView(.horizontal) {
             HStack(alignment: .top, spacing: 16) {
@@ -54,27 +57,66 @@ struct BoardView: View {
         return due < Calendar.current.startOfDay(for: Date())
     }
 
+    private func matchesFilters(_ task: TaskItem) -> Bool {
+        if let priorityFilter, task.priority != priorityFilter { return false }
+        if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
+            let query = searchText.lowercased()
+            guard task.title.lowercased().contains(query) || task.notes.lowercased().contains(query) else {
+                return false
+            }
+        }
+        return true
+    }
+
     private func tasks(for column: BoardColumn) -> [TaskItem] {
+        let base: [TaskItem]
         switch column {
         case .missed:
-            return store.tasks.filter { isMissed($0) }.sorted { $0.sortOrder < $1.sortOrder }
+            base = store.tasks.filter { isMissed($0) }
         case .status(let status):
-            return store.tasks.filter { $0.status == status && !isMissed($0) }.sorted { $0.sortOrder < $1.sortOrder }
+            base = store.tasks.filter { $0.status == status && !isMissed($0) }
         }
+        return base.filter(matchesFilters).sorted { $0.sortOrder < $1.sortOrder }
     }
 
     private func columnView(for column: BoardColumn) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(column.title)
-                .font(.headline)
-                .foregroundStyle(column.isMissed ? Theme.priorityHigh : .primary)
-                .padding(.horizontal, 4)
+        let columnTasks = tasks(for: column)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 6) {
+                Text(column.title.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(column.isMissed ? Theme.priorityHigh : .secondary)
+                    .tracking(0.4)
+
+                Spacer()
+
+                Text("\(columnTasks.count)")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Theme.columnBackground))
+                    .overlay(Capsule().stroke(Theme.cardBorder))
+            }
+            .padding(.horizontal, 4)
 
             VStack(spacing: 8) {
-                ForEach(tasks(for: column)) { task in
-                    TaskCardView(task: task, isMissed: column.isMissed)
-                        .onTapGesture { editor.target = .edit(task) }
-                        .draggable(task.id.uuidString)
+                if columnTasks.isEmpty {
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(Theme.cardBorder, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
+                        .frame(height: 56)
+                        .overlay(
+                            Text("No tasks")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        )
+                } else {
+                    ForEach(columnTasks) { task in
+                        TaskCardView(task: task, isMissed: column.isMissed)
+                            .onTapGesture { editor.target = .edit(task) }
+                            .draggable(task.id.uuidString)
+                    }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -90,7 +132,7 @@ struct BoardView: View {
             }
             .modifier(DropSupport(column: column, store: store))
         }
-        .frame(width: 190)
+        .frame(width: 200)
     }
 }
 
@@ -120,10 +162,28 @@ struct TaskCardView: View {
     var isMissed: Bool = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(task.title)
-                .font(.subheadline.weight(.medium))
-                .lineLimit(2)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top, spacing: 6) {
+                Image(systemName: "line.3.horizontal")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+                    .padding(.top, 2)
+
+                Text(task.title)
+                    .font(.subheadline.weight(.semibold))
+                    .lineLimit(2)
+
+                Spacer(minLength: 0)
+
+                PriorityBadge(priority: task.priority)
+            }
+
+            if !task.notes.isEmpty {
+                Text(task.notes)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
 
             if let due = task.dueDate {
                 HStack(spacing: 4) {
@@ -136,24 +196,28 @@ struct TaskCardView: View {
                 .font(.caption2)
                 .foregroundStyle(isMissed ? Theme.priorityHigh : .secondary)
             }
-
-            HStack {
-                Circle()
-                    .fill(priorityColor)
-                    .frame(width: 6, height: 6)
-                Text(task.priority.rawValue)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
         }
-        .padding(8)
+        .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(RoundedRectangle(cornerRadius: 8).fill(isMissed ? Theme.missedCardBackground : Theme.cardBackground))
         .overlay(RoundedRectangle(cornerRadius: 8).stroke(isMissed ? Theme.missedBorder : Theme.cardBorder))
     }
+}
 
-    private var priorityColor: Color {
-        switch task.priority {
+struct PriorityBadge: View {
+    let priority: TaskPriority
+
+    var body: some View {
+        Text(priority.rawValue)
+            .font(.system(size: 9, weight: .semibold))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(color.opacity(0.16)))
+            .foregroundStyle(color)
+    }
+
+    private var color: Color {
+        switch priority {
         case .low: return Theme.priorityLow
         case .medium: return Theme.priorityMedium
         case .high: return Theme.priorityHigh
