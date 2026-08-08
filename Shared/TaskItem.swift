@@ -20,20 +20,31 @@ enum TaskPriority: String, Codable, CaseIterable, Identifiable {
 enum RecurrenceRule: String, Codable, CaseIterable, Identifiable {
     case none = "None"
     case daily = "Daily"
-    case weekly = "Weekly"
-    case monthly = "Monthly"
-    case yearly = "Yearly"
+    case weekdays = "Weekdays"
+    case weekend = "Weekend"
 
     var id: String { rawValue }
 
-    /// Interval to add to a due date to compute the next occurrence, nil for `.none`.
-    var dateComponents: DateComponents? {
+    /// The next date this rule should fire on, after `date`. `.weekdays`
+    /// skips Sat/Sun; `.weekend` skips Mon–Fri. Nil for `.none`.
+    func nextDate(after date: Date, calendar: Calendar = .current) -> Date? {
         switch self {
-        case .none: return nil
-        case .daily: return DateComponents(day: 1)
-        case .weekly: return DateComponents(day: 7)
-        case .monthly: return DateComponents(month: 1)
-        case .yearly: return DateComponents(year: 1)
+        case .none:
+            return nil
+        case .daily:
+            return calendar.date(byAdding: .day, value: 1, to: date)
+        case .weekdays:
+            var next = calendar.date(byAdding: .day, value: 1, to: date)!
+            while calendar.isDateInWeekend(next) {
+                next = calendar.date(byAdding: .day, value: 1, to: next)!
+            }
+            return next
+        case .weekend:
+            var next = calendar.date(byAdding: .day, value: 1, to: date)!
+            while !calendar.isDateInWeekend(next) {
+                next = calendar.date(byAdding: .day, value: 1, to: next)!
+            }
+            return next
         }
     }
 }

@@ -63,12 +63,13 @@ final class TaskStore: ObservableObject {
         guard task.status == .done,
               task.recurrence != .none,
               let due = task.dueDate,
-              let comp = task.recurrence.dateComponents else { return task }
+              let nextDue = task.recurrence.nextDate(after: due) else { return task }
 
         var next = task
-        next.dueDate = Calendar.current.date(byAdding: comp, to: due) ?? due
+        next.dueDate = nextDue
         if let start = task.startDate {
-            next.startDate = Calendar.current.date(byAdding: comp, to: start) ?? start
+            let dayOffset = Calendar.current.dateComponents([.day], from: due, to: nextDue).day ?? 0
+            next.startDate = Calendar.current.date(byAdding: .day, value: dayOffset, to: start) ?? start
         }
         next.status = .todo
         return next
