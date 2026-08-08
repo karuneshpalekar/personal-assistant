@@ -48,8 +48,10 @@ final class NotificationManager {
     private let lastReminderDateKey = "lastDailyReminderDate"
 
     /// Sends "check your tasks" once per calendar day — call this at launch
-    /// and whenever the Mac wakes from sleep; it no-ops if already sent today.
-    func maybeSendDailyReminder() {
+    /// and whenever the Mac wakes from sleep; it no-ops if already sent
+    /// today. Mentions what's actually due/overdue when there's something,
+    /// rather than a generic message every time.
+    func maybeSendDailyReminder(tasks: [TaskItem]) {
         let today = Calendar.current.startOfDay(for: Date())
         if let lastDate = UserDefaults.standard.object(forKey: lastReminderDateKey) as? Date,
            Calendar.current.isDate(lastDate, inSameDayAs: today) {
@@ -57,9 +59,13 @@ final class NotificationManager {
         }
         UserDefaults.standard.set(today, forKey: lastReminderDateKey)
 
+        let pending = tasks.filter { $0.status != .done && $0.dueDate != nil }
+        let dueToday = pending.filter { Calendar.current.isDateInToday($0.dueDate!) }
+        let overdue = pending.filter { $0.dueDate! < today }
+
         let content = UNMutableNotificationContent()
         content.title = "Kanban Timeline"
-        content.body = "Check your tasks for today"
+        content.body = dailyBody(dueToday: dueToday, overdue: overdue)
         content.sound = .default
 
         let request = UNNotificationRequest(
@@ -68,6 +74,24 @@ final class NotificationManager {
             trigger: nil
         )
         center.add(request)
+    }
+
+    private func dailyBody(dueToday: [TaskItem], overdue: [TaskItem]) -> String {
+        func titleList(_ tasks: [TaskItem]) -> String {
+            let shown = tasks.prefix(3).map(\.title).joined(separator: ", ")
+            let remaining = tasks.count - 3
+            return remaining > 0 ? "\(shown), and \(remaining) more" : shown
+        }
+
+        if !dueToday.isEmpty && !overdue.isEmpty {
+            return "\(dueToday.count) due today, \(overdue.count) overdue: \(titleList(dueToday + overdue))"
+        } else if !dueToday.isEmpty {
+            return "Due today: \(titleList(dueToday))"
+        } else if !overdue.isEmpty {
+            return "\(overdue.count) task\(overdue.count == 1 ? "" : "s") overdue: \(titleList(overdue))"
+        } else {
+            return "Check your tasks for today"
+        }
     }
 
     // MARK: - Deadline alerts (24h before due date)

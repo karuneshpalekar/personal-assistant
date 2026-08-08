@@ -16,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         UNUserNotificationCenter.current().delegate = self
         NotificationManager.shared.requestAuthorization()
-        NotificationManager.shared.maybeSendDailyReminder()
+        NotificationManager.shared.maybeSendDailyReminder(tasks: taskStore.tasks)
         for task in taskStore.tasks {
             NotificationManager.shared.scheduleDeadlineAlert(for: task)
         }
@@ -62,7 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     @objc private func handleWake() {
-        NotificationManager.shared.maybeSendDailyReminder()
+        NotificationManager.shared.maybeSendDailyReminder(tasks: taskStore.tasks)
     }
 
     /// Without this, notifications are silently suppressed while this app
