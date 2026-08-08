@@ -22,6 +22,8 @@ enum RecurrenceRule: String, Codable, CaseIterable, Identifiable {
     case daily = "Daily"
     case weekdays = "Weekdays"
     case weekend = "Weekend"
+    case monthly = "Monthly"
+    case yearly = "Yearly"
 
     var id: String { rawValue }
 
@@ -45,6 +47,10 @@ enum RecurrenceRule: String, Codable, CaseIterable, Identifiable {
                 next = calendar.date(byAdding: .day, value: 1, to: next)!
             }
             return next
+        case .monthly:
+            return calendar.date(byAdding: .month, value: 1, to: date)
+        case .yearly:
+            return calendar.date(byAdding: .year, value: 1, to: date)
         }
     }
 }

@@ -66,4 +66,28 @@ enum Theme {
             dark: NSColor(red: 1.0, green: 0.443, blue: 0.463, alpha: 1)
         )
     }
+
+    // Light-to-strong progression: column tint is barely-there, card tint a
+    // touch more, border the most saturated of the three — kept muted
+    // throughout so the whole column doesn't read as alarming/neon.
+    static var missedColumnBackground: Color {
+        dynamic(
+            light: NSColor(red: 0.992, green: 0.933, blue: 0.933, alpha: 1),
+            dark: NSColor(red: 0.227, green: 0.137, blue: 0.145, alpha: 1)
+        )
+    }
+
+    static var missedCardBackground: Color {
+        dynamic(
+            light: NSColor(red: 0.984, green: 0.855, blue: 0.855, alpha: 1),
+            dark: NSColor(red: 0.271, green: 0.165, blue: 0.176, alpha: 1)
+        )
+    }
+
+    static var missedBorder: Color {
+        dynamic(
+            light: NSColor(red: 0.898, green: 0.451, blue: 0.451, alpha: 1),
+            dark: NSColor(red: 0.722, green: 0.361, blue: 0.361, alpha: 1)
+        )
+    }
 }
