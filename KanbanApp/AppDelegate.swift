@@ -62,6 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     @objc private func handleWake() {
+        taskStore.load()
         NotificationManager.shared.maybeSendDailyReminder(tasks: taskStore.tasks)
     }
 

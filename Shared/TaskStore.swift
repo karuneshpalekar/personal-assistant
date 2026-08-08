@@ -19,6 +19,7 @@ final class TaskStore: ObservableObject {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         tasks = (try? decoder.decode([TaskItem].self, from: data)) ?? []
+        promoteApproachingDeadlines()
     }
 
     func save() {
@@ -40,10 +41,29 @@ final class TaskStore: ObservableObject {
         } else {
             tasks.append(finalTask)
         }
+        promoteApproachingDeadlines()
         save()
         NotificationManager.shared.scheduleDeadlineAlert(for: finalTask)
         if remindersSyncEnabled {
             RemindersSync.shared.sync(finalTask)
+        }
+    }
+
+    /// Auto-promotes Backlog tasks with a due date within 3 days to To Do,
+    /// so nothing with an approaching deadline gets left behind. Runs on
+    /// every load (launch, manual Refresh) and after every upsert (in case
+    /// a due date was just set/edited into that window).
+    private func promoteApproachingDeadlines() {
+        let threshold = Calendar.current.date(
+            byAdding: .day, value: 3, to: Calendar.current.startOfDay(for: Date())
+        )!
+        for idx in tasks.indices {
+            guard tasks[idx].status == .backlog,
+                  let due = tasks[idx].dueDate,
+                  due <= threshold else { continue }
+            tasks[idx].status = .todo
+            let maxOrder = tasks.filter { $0.status == .todo }.map(\.sortOrder).max() ?? 0
+            tasks[idx].sortOrder = maxOrder + 1
         }
     }
 
