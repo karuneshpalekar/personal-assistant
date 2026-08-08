@@ -15,6 +15,7 @@ struct TaskEditView: View {
     @State private var hasStartDate = false
     @State private var dueDate: Date = Date()
     @State private var hasDueDate = true
+    @State private var recurrence: RecurrenceRule = .none
 
     var body: some View {
         Form {
@@ -40,6 +41,10 @@ struct TaskEditView: View {
             if hasDueDate {
                 DatePicker("", selection: $dueDate, displayedComponents: .date)
                     .labelsHidden()
+
+                Picker("Repeat", selection: $recurrence) {
+                    ForEach(RecurrenceRule.allCases) { Text($0.rawValue).tag($0) }
+                }
             }
 
             HStack {
@@ -76,6 +81,7 @@ struct TaskEditView: View {
         priority = task.priority
         if let s = task.startDate { hasStartDate = true; startDate = s }
         if let d = task.dueDate { hasDueDate = true; dueDate = d }
+        recurrence = task.recurrence
     }
 
     private func save() {
@@ -86,6 +92,7 @@ struct TaskEditView: View {
         target.priority = priority
         target.startDate = hasStartDate ? startDate : nil
         target.dueDate = hasDueDate ? dueDate : nil
+        target.recurrence = hasDueDate ? recurrence : .none
         store.upsert(target)
         dismiss()
     }

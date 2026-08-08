@@ -30,13 +30,14 @@ final class TaskStore: ObservableObject {
     }
 
     func upsert(_ task: TaskItem) {
-        if let idx = tasks.firstIndex(where: { $0.id == task.id }) {
-            tasks[idx] = task
+        let finalTask = advanceIfRecurring(task)
+        if let idx = tasks.firstIndex(where: { $0.id == finalTask.id }) {
+            tasks[idx] = finalTask
         } else {
-            tasks.append(task)
+            tasks.append(finalTask)
         }
         save()
-        NotificationManager.shared.scheduleDeadlineAlert(for: task)
+        NotificationManager.shared.scheduleDeadlineAlert(for: finalTask)
     }
 
     func delete(_ task: TaskItem) {
@@ -50,7 +51,26 @@ final class TaskStore: ObservableObject {
         tasks[idx].status = status
         let maxOrder = tasks.filter { $0.status == status }.map(\.sortOrder).max() ?? 0
         tasks[idx].sortOrder = maxOrder + 1
+        tasks[idx] = advanceIfRecurring(tasks[idx])
         save()
         NotificationManager.shared.scheduleDeadlineAlert(for: tasks[idx])
+    }
+
+    /// If a recurring task is marked Done, roll it forward to its next
+    /// occurrence (advance due/start dates, reset status) instead of
+    /// letting it just sit completed.
+    private func advanceIfRecurring(_ task: TaskItem) -> TaskItem {
+        guard task.status == .done,
+              task.recurrence != .none,
+              let due = task.dueDate,
+              let comp = task.recurrence.dateComponents else { return task }
+
+        var next = task
+        next.dueDate = Calendar.current.date(byAdding: comp, to: due) ?? due
+        if let start = task.startDate {
+            next.startDate = Calendar.current.date(byAdding: comp, to: start) ?? start
+        }
+        next.status = .todo
+        return next
     }
 }

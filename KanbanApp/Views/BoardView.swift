@@ -57,9 +57,15 @@ struct TaskCardView: View {
                 .lineLimit(2)
 
             if let due = task.dueDate {
-                Label(due.formatted(date: .abbreviated, time: .omitted), systemImage: "calendar")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Label(due.formatted(date: .abbreviated, time: .omitted), systemImage: "calendar")
+                    if task.recurrence != .none {
+                        Image(systemName: "repeat")
+                            .help(task.recurrence.rawValue)
+                    }
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
 
             HStack {
