@@ -1,15 +1,19 @@
 import SwiftUI
 import AppKit
 
-/// An NSPanel that behaves like a persistent desktop widget: floats above
-/// normal windows and doesn't steal focus from whatever you're doing.
-/// Deliberately does NOT use `.canJoinAllSpaces` or `.fullScreenAuxiliary`
-/// — it should stay put on whichever desktop Space it was opened on, not
-/// follow you to other Spaces or bleed into other apps' full-screen mode.
-/// Also deliberately does NOT use isMovableByWindowBackground — that made
-/// the whole panel drag around when trying to drag a task card between
-/// columns. Repositioning the panel is done via DragHandle, applied only
-/// to the toolbar header.
+/// An NSPanel that behaves like a persistent desktop widget: stays
+/// available without a Dock icon, doesn't steal focus from whatever
+/// you're doing when it's not the active window. Deliberately uses normal
+/// window layering (not .floating) — whichever app/window you actually
+/// click should come to front, same as any regular window; it shouldn't
+/// sit permanently above everything else. Deliberately does NOT use
+/// `.canJoinAllSpaces` or `.fullScreenAuxiliary` — it should stay put on
+/// whichever desktop Space it was opened on, not follow you to other
+/// Spaces or bleed into other apps' full-screen mode. Also deliberately
+/// does NOT use isMovableByWindowBackground — that made the whole panel
+/// drag around when trying to drag a task card between columns.
+/// Repositioning the panel is done via DragHandle, applied only to the
+/// toolbar header.
 final class FloatingPanel: NSPanel, NSWindowDelegate {
     static let expandedSize = NSSize(width: 900, height: 640)
     static let collapsedSize = NSSize(width: 280, height: 72)
@@ -35,8 +39,8 @@ final class FloatingPanel: NSPanel, NSWindowDelegate {
             defer: false
         )
 
-        isFloatingPanel = true
-        level = .floating
+        isFloatingPanel = false
+        level = .normal
         collectionBehavior = [.stationary]
         titleVisibility = .hidden
         titlebarAppearsTransparent = true
