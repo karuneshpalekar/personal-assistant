@@ -48,6 +48,12 @@ struct TaskEditView: View {
                 Picker("Repeat", selection: $recurrence) {
                     ForEach(RecurrenceRule.allCases) { Text($0.rawValue).tag($0) }
                 }
+
+                if sameDayTaskCount >= 3 {
+                    Label("\(sameDayTaskCount) tasks already due on this date", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(Theme.priorityHigh)
+                }
             }
 
             Toggle("Time required", isOn: $hasEstimate)
@@ -78,6 +84,14 @@ struct TaskEditView: View {
                 titleFocused = true
             }
         }
+    }
+
+    private var sameDayTaskCount: Int {
+        store.tasks.filter { other in
+            guard let due = other.dueDate else { return false }
+            if let task, other.id == task.id { return false }
+            return Calendar.current.isDate(due, inSameDayAs: dueDate)
+        }.count
     }
 
     private func dismiss() {

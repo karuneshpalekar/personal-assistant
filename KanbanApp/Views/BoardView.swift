@@ -40,6 +40,8 @@ struct BoardView: View {
 
     var searchText: String = ""
     var priorityFilter: TaskPriority? = nil
+    var dateFilter: Date? = nil
+    var noDistractionMode: Bool = false
 
     var body: some View {
         ScrollView(.horizontal) {
@@ -59,6 +61,15 @@ struct BoardView: View {
 
     private func matchesFilters(_ task: TaskItem) -> Bool {
         if let priorityFilter, task.priority != priorityFilter { return false }
+        if noDistractionMode {
+            guard let due = task.dueDate else { return false }
+            let calendar = Calendar.current
+            guard calendar.isDateInToday(due) || calendar.isDateInTomorrow(due) else { return false }
+        } else if let dateFilter {
+            guard let due = task.dueDate, Calendar.current.isDate(due, inSameDayAs: dateFilter) else {
+                return false
+            }
+        }
         if !searchText.trimmingCharacters(in: .whitespaces).isEmpty {
             let query = searchText.lowercased()
             guard task.title.lowercased().contains(query) || task.notes.lowercased().contains(query) else {

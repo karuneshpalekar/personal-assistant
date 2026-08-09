@@ -38,6 +38,9 @@ struct ContentView: View {
     @State private var showingSettings = false
     @State private var searchText = ""
     @State private var priorityFilter: TaskPriority?
+    @State private var dateFilter: Date?
+    @State private var showingDateFilterPicker = false
+    @State private var noDistractionMode = false
 
     private var appearanceMode: AppearanceMode {
         AppearanceMode(rawValue: appearanceModeRaw) ?? .system
@@ -56,7 +59,12 @@ struct ContentView: View {
 
                     switch mode {
                     case .kanban:
-                        BoardView(searchText: searchText, priorityFilter: priorityFilter)
+                        BoardView(
+                            searchText: searchText,
+                            priorityFilter: priorityFilter,
+                            dateFilter: dateFilter,
+                            noDistractionMode: noDistractionMode
+                        )
                     case .timeline:
                         TimelineView()
                     }
@@ -175,6 +183,20 @@ struct ContentView: View {
             }
             .fixedSize()
 
+            Button {
+                showingDateFilterPicker = true
+            } label: {
+                if let dateFilter {
+                    Label(dateFilter.formatted(date: .abbreviated, time: .omitted), systemImage: "calendar")
+                } else {
+                    Label("Any date", systemImage: "calendar")
+                }
+            }
+            .fixedSize()
+            .popover(isPresented: $showingDateFilterPicker) {
+                DateFilterPopover(dateFilter: $dateFilter, isPresented: $showingDateFilterPicker)
+            }
+
             Picker("", selection: $mode) {
                 ForEach(BoardMode.allCases) { m in
                     Text(m.rawValue).tag(m)
@@ -184,9 +206,59 @@ struct ContentView: View {
             .frame(width: 160)
 
             Spacer()
+
+            Toggle(isOn: $noDistractionMode.animation(.easeInOut(duration: 0.15))) {
+                Label("No Distraction", systemImage: "target")
+            }
+            .toggleStyle(.button)
+            .help("Show only tasks due today or tomorrow")
         }
         .padding(.horizontal)
         .padding(.bottom, 10)
+    }
+}
+
+struct DateFilterPopover: View {
+    @EnvironmentObject private var store: TaskStore
+    @Binding var dateFilter: Date?
+    @Binding var isPresented: Bool
+    @State private var pickedDate: Date = Date()
+
+    private var countOnPickedDate: Int {
+        store.tasks.filter { task in
+            guard let due = task.dueDate else { return false }
+            return Calendar.current.isDate(due, inSameDayAs: pickedDate)
+        }.count
+    }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            DatePicker("", selection: $pickedDate, displayedComponents: .date)
+                .datePickerStyle(.graphical)
+                .labelsHidden()
+
+            Text("\(countOnPickedDate) task\(countOnPickedDate == 1 ? "" : "s") due on this date")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack {
+                Button("Clear") {
+                    dateFilter = nil
+                    isPresented = false
+                }
+                Spacer()
+                Button("Apply") {
+                    dateFilter = pickedDate
+                    isPresented = false
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding(16)
+        .frame(width: 280)
+        .onAppear {
+            pickedDate = dateFilter ?? Date()
+        }
     }
 }
 
