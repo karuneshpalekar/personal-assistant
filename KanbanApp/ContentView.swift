@@ -152,6 +152,14 @@ struct ContentView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Collapse to a compact pill")
+
+                Button {
+                    panelState.isHidden = true
+                } label: {
+                    Image(systemName: "eye.slash")
+                }
+                .buttonStyle(.borderless)
+                .help("Hide board — click the menu bar icon to bring it back")
             }
         }
         .padding([.horizontal, .top])

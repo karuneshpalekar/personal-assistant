@@ -9,6 +9,10 @@ final class PanelState: ObservableObject {
         }
     }
 
+    /// Not persisted — the panel should always show on next launch
+    /// regardless of whether it was hidden when the app last quit.
+    @Published var isHidden: Bool = false
+
     init() {
         isCollapsed = UserDefaults.standard.bool(forKey: Self.isCollapsedKey)
     }

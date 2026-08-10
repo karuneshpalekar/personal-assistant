@@ -59,6 +59,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 panel?.setCollapsed(collapsed)
             }
             .store(in: &cancellables)
+
+        panelState.$isHidden
+            .removeDuplicates()
+            .dropFirst()
+            .sink { [weak panel] hidden in
+                if hidden {
+                    panel?.orderOut(nil)
+                } else {
+                    panel?.orderFrontRegardless()
+                }
+            }
+            .store(in: &cancellables)
     }
 
     @objc private func handleWake() {
@@ -101,11 +113,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     func togglePanel() {
-        guard let panel else { return }
-        if panel.isVisible {
-            panel.orderOut(nil)
-        } else {
-            panel.orderFrontRegardless()
-        }
+        panelState.isHidden.toggle()
     }
 }
