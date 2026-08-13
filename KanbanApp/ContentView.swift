@@ -3,6 +3,7 @@ import SwiftUI
 enum BoardMode: String, CaseIterable, Identifiable {
     case kanban = "Board"
     case timeline = "Timeline"
+    case done = "Done"
     var id: String { rawValue }
 }
 
@@ -67,6 +68,8 @@ struct ContentView: View {
                         )
                     case .timeline:
                         TimelineView()
+                    case .done:
+                        DoneListView(searchText: searchText, priorityFilter: priorityFilter, dateFilter: dateFilter)
                     }
                 }
 
@@ -211,7 +214,7 @@ struct ContentView: View {
                 }
             }
             .pickerStyle(.segmented)
-            .frame(width: 160)
+            .frame(width: 220)
 
             Spacer()
 
