@@ -118,8 +118,4 @@ generate.sh                  xcodegen generate + Xcode-15.3-compat patch
 install.sh                   build Release + install to /Applications + launch
 ```
 
-## Roadmap
 
-- [ ] Custom/renameable kanban columns
-- [ ] Remember/restore panel position and size across launches
-- [ ] Snooze/dismiss actions on notifications
