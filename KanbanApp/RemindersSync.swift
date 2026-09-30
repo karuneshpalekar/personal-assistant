@@ -1,14 +1,14 @@
 import EventKit
 import Foundation
 
-/// Mirrors pending tasks into a dedicated "Kanban Timeline" Reminders list.
-/// Reminders already syncs across devices via iCloud and delivers native
-/// notifications on iPhone — so this needs no push infrastructure, no
-/// third-party service, and no paid Apple Developer account.
+/// Mirrors pending tasks into a dedicated "Personal Assistant" Reminders
+/// list. Reminders already syncs across devices via iCloud and delivers
+/// native notifications on iPhone — so this needs no push infrastructure,
+/// no third-party service, and no paid Apple Developer account.
 final class RemindersSync {
     static let shared = RemindersSync()
     private let store = EKEventStore()
-    private let listTitle = "Kanban Timeline"
+    private let listTitle = "Personal Assistant"
     private let mappingKey = "reminderIdentifierMapping"
 
     private init() {}
@@ -31,7 +31,7 @@ final class RemindersSync {
         set { UserDefaults.standard.set(newValue, forKey: mappingKey) }
     }
 
-    private func kanbanCalendar() -> EKCalendar? {
+    private func personalAssistantCalendar() -> EKCalendar? {
         if let existing = store.calendars(for: .reminder).first(where: { $0.title == listTitle }) {
             return existing
         }
@@ -68,7 +68,7 @@ final class RemindersSync {
             reminder = existing
         } else {
             reminder = EKReminder(eventStore: store)
-            reminder.calendar = kanbanCalendar()
+            reminder.calendar = personalAssistantCalendar()
         }
 
         reminder.title = task.title

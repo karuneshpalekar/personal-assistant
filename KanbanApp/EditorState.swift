@@ -1,6 +1,6 @@
 import SwiftUI
 
-enum EditorTarget: Identifiable {
+enum EditorTarget: Identifiable, Equatable {
     case new
     case edit(TaskItem)
 

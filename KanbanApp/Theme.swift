@@ -1,93 +1,144 @@
 import SwiftUI
 import AppKit
 
-/// App color palette — distinct, hand-tuned values per appearance rather
-/// than generic system grays, so light and dark each look considered
-/// rather than one being an inverted afterthought.
-enum Theme {
-    private static func dynamic(light: NSColor, dark: NSColor) -> Color {
-        Color(NSColor(name: nil) { appearance in
-            appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light
-        })
+/// One set of timings so every animation in the app feels related.
+enum Motion {
+    /// Content changing in place (view switch, filter, editor appearing).
+    static let swap = Animation.easeInOut(duration: 0.2)
+    /// Bigger context changes (switching Board/Timeline/Done).
+    static let screen = Animation.easeInOut(duration: 0.22)
+}
+
+/// Meaning-driven color for status tags — green = fine/done, orange = needs
+/// attention soon, red = overdue/act now, purple = informational, gray =
+/// inactive.
+enum Tag {
+    case fine, attention, urgent, info, inactive
+
+    var color: Color {
+        switch self {
+        case .fine: return .green
+        case .attention: return .orange
+        case .urgent: return .red
+        case .info: return .purple
+        case .inactive: return .secondary
+        }
+    }
+}
+
+/// Small status label: colored text on the same color at 15% opacity.
+@MainActor
+struct TagBadge: View {
+    let text: String
+    let tag: Tag
+
+    var body: some View {
+        Text(text)
+            .font(.caption2.weight(.semibold))
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .foregroundStyle(tag.color)
+            .background(tag.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 5))
+    }
+}
+
+/// Capsule filter chip — selected = primary color fill with window-background
+/// text, unselected = secondary at 12%.
+@MainActor
+struct FilterChip: View {
+    let title: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title).font(.callout)
+                .lineLimit(1)
+                .fixedSize()
+                .padding(.horizontal, 10).padding(.vertical, 3)
+                .foregroundStyle(selected ? Color(nsColor: .windowBackgroundColor) : .primary)
+                .background(selected ? Color.primary : Color.secondary.opacity(0.12), in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// A card surface — `.background` fill with a hairline `.separator` stroke.
+extension View {
+    func cardStyle(radius: CGFloat = 10) -> some View {
+        background(.background, in: RoundedRectangle(cornerRadius: radius))
+            .overlay(RoundedRectangle(cornerRadius: radius).stroke(.separator))
     }
 
-    static var panelBackground: Color {
-        dynamic(
-            light: NSColor(red: 0.969, green: 0.973, blue: 0.980, alpha: 1),
-            dark: NSColor(red: 0.106, green: 0.110, blue: 0.129, alpha: 1)
-        )
+    /// Same shape, tinted red for the Deadline Missed column — kept subtle
+    /// (low opacity throughout) so it reads as flagged, not alarming.
+    func missedCardStyle(radius: CGFloat = 10) -> some View {
+        background(Tag.urgent.color.opacity(0.07), in: RoundedRectangle(cornerRadius: radius))
+            .overlay(RoundedRectangle(cornerRadius: radius).stroke(Tag.urgent.color.opacity(0.35)))
+    }
+}
+
+enum AppearanceMode: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
     }
 
-    static var columnBackground: Color {
-        dynamic(
-            light: NSColor(red: 0.933, green: 0.941, blue: 0.953, alpha: 1),
-            dark: NSColor(red: 0.161, green: 0.169, blue: 0.192, alpha: 1)
-        )
+    var symbol: String {
+        switch self {
+        case .system: return "circle.lefthalf.filled"
+        case .light: return "sun.max"
+        case .dark: return "moon"
+        }
     }
 
-    static var cardBackground: Color {
-        dynamic(
-            light: NSColor.white,
-            dark: NSColor(red: 0.196, green: 0.204, blue: 0.231, alpha: 1)
-        )
-    }
+    var title: String { rawValue.capitalized }
+}
 
-    static var cardBorder: Color {
-        dynamic(
-            light: NSColor(red: 0.878, green: 0.890, blue: 0.914, alpha: 1),
-            dark: NSColor(red: 0.278, green: 0.290, blue: 0.322, alpha: 1)
-        )
-    }
+/// Compact System / Light / Dark switch, segmented with SF Symbols.
+@MainActor
+struct AppearanceToggle: View {
+    @AppStorage("appearanceMode") private var appearanceRaw = AppearanceMode.system.rawValue
 
-    static var accent: Color {
-        dynamic(
-            light: NSColor(red: 0.345, green: 0.412, blue: 0.953, alpha: 1),
-            dark: NSColor(red: 0.541, green: 0.588, blue: 1.0, alpha: 1)
-        )
+    var body: some View {
+        Picker("Appearance", selection: $appearanceRaw) {
+            ForEach(AppearanceMode.allCases) { mode in
+                Image(systemName: mode.symbol)
+                    .help(mode.title)
+                    .accessibilityLabel(mode.title)
+                    .tag(mode.rawValue)
+            }
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+        .frame(width: 76)
     }
+}
 
-    static var priorityLow: Color {
-        dynamic(
-            light: NSColor(red: 0.184, green: 0.616, blue: 0.345, alpha: 1),
-            dark: NSColor(red: 0.361, green: 0.827, blue: 0.522, alpha: 1)
-        )
+extension TaskPriority {
+    var tag: Tag {
+        switch self {
+        case .low: return .fine
+        case .medium: return .attention
+        case .high: return .urgent
+        }
     }
+}
 
-    static var priorityMedium: Color {
-        dynamic(
-            light: NSColor(red: 0.898, green: 0.580, blue: 0.043, alpha: 1),
-            dark: NSColor(red: 1.0, green: 0.702, blue: 0.322, alpha: 1)
-        )
-    }
+/// Fades a screen in when it appears — opacity only (no offset/size
+/// animation) so it doesn't fight the panel's own AppKit-driven resizing.
+struct FadeIn: ViewModifier {
+    @State private var shown = false
 
-    static var priorityHigh: Color {
-        dynamic(
-            light: NSColor(red: 0.878, green: 0.267, blue: 0.298, alpha: 1),
-            dark: NSColor(red: 1.0, green: 0.443, blue: 0.463, alpha: 1)
-        )
-    }
-
-    // Light-to-strong progression: column tint is barely-there, card tint a
-    // touch more, border the most saturated of the three — kept muted
-    // throughout so the whole column doesn't read as alarming/neon.
-    static var missedColumnBackground: Color {
-        dynamic(
-            light: NSColor(red: 0.992, green: 0.933, blue: 0.933, alpha: 1),
-            dark: NSColor(red: 0.227, green: 0.137, blue: 0.145, alpha: 1)
-        )
-    }
-
-    static var missedCardBackground: Color {
-        dynamic(
-            light: NSColor(red: 0.984, green: 0.855, blue: 0.855, alpha: 1),
-            dark: NSColor(red: 0.271, green: 0.165, blue: 0.176, alpha: 1)
-        )
-    }
-
-    static var missedBorder: Color {
-        dynamic(
-            light: NSColor(red: 0.898, green: 0.451, blue: 0.451, alpha: 1),
-            dark: NSColor(red: 0.722, green: 0.361, blue: 0.361, alpha: 1)
-        )
+    func body(content: Content) -> some View {
+        content
+            .opacity(shown ? 1 : 0)
+            .onAppear { withAnimation(Motion.screen) { shown = true } }
     }
 }

@@ -15,15 +15,13 @@ import AppKit
 /// Repositioning the panel is done via DragHandle, applied only to the
 /// toolbar header.
 final class FloatingPanel: NSPanel, NSWindowDelegate {
-    static let expandedSize = NSSize(width: 900, height: 640)
-    static let collapsedSize = NSSize(width: 280, height: 72)
+    static let defaultSize = NSSize(width: 900, height: 640)
+    private static let minFloor = NSSize(width: 600, height: 400)
 
     private static let originXKey = "panelOriginX"
     private static let originYKey = "panelOriginY"
     private static let widthKey = "panelWidth"
     private static let heightKey = "panelHeight"
-
-    private(set) var isCollapsedState = false
 
     /// Frame changes aren't persisted until this is true — set once by
     /// AppDelegate after the panel's initial position/size (restored or
@@ -33,7 +31,7 @@ final class FloatingPanel: NSPanel, NSWindowDelegate {
 
     init(contentView: some View) {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 900, height: 640),
+            contentRect: NSRect(origin: .zero, size: Self.defaultSize),
             styleMask: [.titled, .closable, .resizable, .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false
@@ -47,23 +45,17 @@ final class FloatingPanel: NSPanel, NSWindowDelegate {
         isMovableByWindowBackground = false
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
+        // No .miniaturizable in styleMask above, so there's no minimize
+        // capability or button at all — nothing further to disable there.
         standardWindowButton(.zoomButton)?.isHidden = true
-        standardWindowButton(.miniaturizeButton)?.isHidden = true
         delegate = self
 
         self.contentView = NSHostingView(rootView: contentView)
-    }
 
-    /// Resizes toward/from a compact pill, keeping the top-right corner
-    /// anchored in place so it collapses/expands like a real widget rather
-    /// than jumping around the screen.
-    func setCollapsed(_ collapsed: Bool) {
-        isCollapsedState = collapsed
-        let newSize = collapsed ? Self.collapsedSize : Self.expandedSize
-        let topRight = NSPoint(x: frame.maxX, y: frame.maxY)
-        let newOrigin = NSPoint(x: topRight.x - newSize.width, y: topRight.y - newSize.height)
-        let newFrame = NSRect(origin: newOrigin, size: newSize)
-        setFrame(newFrame, display: true, animate: true)
+        // A floor, not a hard pin — the panel is freely resizable by
+        // dragging its edges (the frame is persisted across launches), it
+        // just can't be dragged smaller than this.
+        minSize = Self.minFloor
     }
 
     func windowDidMove(_ notification: Notification) {
@@ -75,7 +67,7 @@ final class FloatingPanel: NSPanel, NSWindowDelegate {
     }
 
     private func persistFrameIfNeeded() {
-        guard frameTrackingEnabled, !isCollapsedState else { return }
+        guard frameTrackingEnabled else { return }
         let d = UserDefaults.standard
         d.set(frame.origin.x, forKey: Self.originXKey)
         d.set(frame.origin.y, forKey: Self.originYKey)
@@ -83,7 +75,7 @@ final class FloatingPanel: NSPanel, NSWindowDelegate {
         d.set(frame.size.height, forKey: Self.heightKey)
     }
 
-    /// The last-saved expanded frame, if any and still roughly on-screen.
+    /// The last-saved frame, if any and still roughly on-screen.
     static func savedFrame(fittingIn screenFrame: NSRect) -> NSRect? {
         let d = UserDefaults.standard
         guard d.object(forKey: originXKey) != nil else { return nil }

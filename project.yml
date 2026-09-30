@@ -1,6 +1,6 @@
-name: KanbanTimeline
+name: PersonalAssistant
 options:
-  bundleIdPrefix: com.karunesh.kanbantimeline
+  bundleIdPrefix: com.karunesh.personalassistant
   deploymentTarget:
     macOS: "14.0"
   createIntermediateGroups: true
@@ -16,7 +16,7 @@ settings:
     CODE_SIGNING_ALLOWED: YES
 
 targets:
-  KanbanApp:
+  PersonalAssistantApp:
     type: application
     platform: macOS
     sources:
@@ -24,23 +24,23 @@ targets:
       - path: Shared
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.karunesh.kanbantimeline.app
-        PRODUCT_NAME: KanbanTimeline
+        PRODUCT_BUNDLE_IDENTIFIER: com.karunesh.personalassistant.app
+        PRODUCT_NAME: PersonalAssistant
         ENABLE_HARDENED_RUNTIME: false
     info:
       path: KanbanApp/Info.plist
       properties:
-        CFBundleDisplayName: Kanban Timeline
+        CFBundleDisplayName: Personal Assistant
         LSUIElement: true
         NSHumanReadableCopyright: ""
-        NSRemindersFullAccessUsageDescription: "Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud."
-        NSRemindersUsageDescription: "Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud."
+        NSRemindersFullAccessUsageDescription: "Personal Assistant can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud."
+        NSRemindersUsageDescription: "Personal Assistant can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud."
 
 schemes:
-  KanbanTimeline:
+  PersonalAssistant:
     build:
       targets:
-        KanbanApp: all
+        PersonalAssistantApp: all
     run:
       config: Debug
     archive:

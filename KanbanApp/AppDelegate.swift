@@ -3,6 +3,7 @@ import AppKit
 import Combine
 import UserNotifications
 
+@MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     var panel: FloatingPanel?
     let editorState = EditorState()
@@ -45,20 +46,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 panel.setFrameOrigin(origin)
             }
         }
-        if panelState.isCollapsed {
-            panel.setCollapsed(true)
-        }
         panel.orderFrontRegardless()
         panel.frameTrackingEnabled = true
         self.panel = panel
-
-        panelState.$isCollapsed
-            .removeDuplicates()
-            .dropFirst()
-            .sink { [weak panel] collapsed in
-                panel?.setCollapsed(collapsed)
-            }
-            .store(in: &cancellables)
 
         panelState.$isHidden
             .removeDuplicates()
@@ -71,6 +61,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 }
             }
             .store(in: &cancellables)
+
+        #if DEBUG
+        if let dir = ProcessInfo.processInfo.environment["PA_SHOTS"] {
+            Task {
+                await ScreenshotTour.run(
+                    store: taskStore, panelState: panelState, editor: editorState,
+                    panel: panel, to: URL(fileURLWithPath: dir)
+                )
+            }
+        }
+        #endif
     }
 
     @objc private func handleWake() {

@@ -7,35 +7,12 @@ enum BoardMode: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-enum AppearanceMode: String, CaseIterable, Identifiable {
-    case system = "System"
-    case light = "Light"
-    case dark = "Dark"
-    var id: String { rawValue }
-
-    var colorScheme: ColorScheme? {
-        switch self {
-        case .system: return nil
-        case .light: return .light
-        case .dark: return .dark
-        }
-    }
-
-    var icon: String {
-        switch self {
-        case .system: return "circle.lefthalf.filled"
-        case .light: return "sun.max.fill"
-        case .dark: return "moon.fill"
-        }
-    }
-}
-
+@MainActor
 struct ContentView: View {
     @EnvironmentObject private var editor: EditorState
     @EnvironmentObject private var panelState: PanelState
     @EnvironmentObject private var store: TaskStore
-    @AppStorage("appearanceMode") private var appearanceModeRaw: String = AppearanceMode.system.rawValue
-    @State private var mode: BoardMode = .kanban
+    @AppStorage("appearanceMode") private var appearanceRaw: String = AppearanceMode.system.rawValue
     @State private var showingSettings = false
     @State private var searchText = ""
     @State private var priorityFilter: TaskPriority?
@@ -43,156 +20,124 @@ struct ContentView: View {
     @State private var showingDateFilterPicker = false
     @State private var noDistractionMode = false
 
-    private var appearanceMode: AppearanceMode {
-        AppearanceMode(rawValue: appearanceModeRaw) ?? .system
+    private var appearance: AppearanceMode {
+        AppearanceMode(rawValue: appearanceRaw) ?? .system
+    }
+
+    private var openCount: Int {
+        store.tasks.filter { $0.status != .done }.count
     }
 
     var body: some View {
         ZStack {
-            if panelState.isCollapsed {
-                CompactPillView()
-            } else {
-                VStack(spacing: 0) {
-                    header
-                    filterBar
+            VStack(spacing: 0) {
+                header
+                filterBar
+                Divider()
 
-                    Divider()
+                content
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .modifier(FadeIn())
+                    .id(panelState.mode)
 
-                    switch mode {
-                    case .kanban:
-                        BoardView(
-                            searchText: searchText,
-                            priorityFilter: priorityFilter,
-                            dateFilter: dateFilter,
-                            noDistractionMode: noDistractionMode
-                        )
-                    case .timeline:
-                        TimelineView()
-                    case .done:
-                        DoneListView(searchText: searchText, priorityFilter: priorityFilter, dateFilter: dateFilter)
-                    }
-                }
+                Divider()
+                footer
+            }
 
-                if let target = editor.target {
-                    Color.black.opacity(0.25)
-                        .onTapGesture { editor.target = nil }
+            if let target = editor.target {
+                Color.black.opacity(0.28).ignoresSafeArea()
+                    .onTapGesture { editor.target = nil }
 
-                    TaskEditView(task: target.task)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(Theme.cardBackground))
-                        .shadow(radius: 20)
-                }
+                TaskEditView(task: target.task)
+                    .padding(22)
+                    .transition(.opacity)
+                    .animation(Motion.swap, value: editor.target)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Theme.panelBackground)
-        .tint(Theme.accent)
-        .preferredColorScheme(appearanceMode.colorScheme)
+        .background(.background)
+        .preferredColorScheme(appearance.colorScheme)
     }
 
+    // MARK: Header
+
     private var header: some View {
-        HStack(alignment: .top) {
+        HStack(alignment: .top, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Kanban Timeline")
-                    .font(.title2.bold())
+                HStack(spacing: 7) {
+                    Image(systemName: "square.grid.2x2.fill")
+                        .foregroundStyle(Color.accentColor)
+                    Text("Personal Assistant").font(.title3.weight(.semibold))
+                }
                 Text("Track work as it moves across your board")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Spacer()
+            Spacer(minLength: 0)
 
-            HStack(spacing: 10) {
-                Button {
-                    store.load()
-                } label: {
-                    Label("Refresh", systemImage: "arrow.clockwise")
-                }
-                .buttonStyle(.bordered)
-
-                Button {
-                    editor.target = .new
-                } label: {
-                    Label("New Task", systemImage: "plus")
-                }
-                .buttonStyle(.borderedProminent)
-
-                Menu {
-                    ForEach(AppearanceMode.allCases) { mode in
-                        Button {
-                            appearanceModeRaw = mode.rawValue
-                        } label: {
-                            if mode == appearanceMode {
-                                Label(mode.rawValue, systemImage: "checkmark")
-                            } else {
-                                Text(mode.rawValue)
-                            }
-                        }
-                    }
-                } label: {
-                    Image(systemName: appearanceMode.icon)
-                }
-                .menuStyle(.borderlessButton)
-                .fixedSize()
-                .help("Appearance")
-
-                Button {
-                    showingSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                }
-                .buttonStyle(.borderless)
-                .help("Settings")
-                .popover(isPresented: $showingSettings, arrowEdge: .bottom) {
-                    SettingsView()
-                }
-
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        panelState.isCollapsed = true
-                    }
-                } label: {
-                    Image(systemName: "arrow.down.right.and.arrow.up.left")
-                }
-                .buttonStyle(.borderless)
-                .help("Collapse to a compact pill")
-
-                Button {
-                    panelState.isHidden = true
-                } label: {
-                    Image(systemName: "eye.slash")
-                }
-                .buttonStyle(.borderless)
-                .help("Hide board — click the menu bar icon to bring it back")
+            Button {
+                store.load()
+            } label: {
+                Label("Refresh", systemImage: "arrow.clockwise")
             }
+            .buttonStyle(.bordered)
+
+            Button {
+                editor.target = .new
+            } label: {
+                Label("New task", systemImage: "plus")
+            }
+            .buttonStyle(.borderedProminent)
+
+            AppearanceToggle()
+
+            Button {
+                showingSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .buttonStyle(.borderless)
+            .help("Settings")
+            .popover(isPresented: $showingSettings, arrowEdge: .bottom) {
+                SettingsView()
+            }
+
+            Button {
+                panelState.isHidden = true
+            } label: {
+                Image(systemName: "eye.slash")
+            }
+            .buttonStyle(.borderless)
+            .help("Hide board — click the menu bar icon to bring it back")
         }
-        .padding([.horizontal, .top])
-        .padding(.bottom, 10)
+        .padding(.horizontal, 14)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
         .background(DragHandle())
     }
+
+    // MARK: Filters
 
     private var filterBar: some View {
         HStack(spacing: 10) {
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                TextField("Search by title or notes…", text: $searchText)
+                TextField("Search by title or notes", text: $searchText)
                     .textFieldStyle(.plain)
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Theme.columnBackground))
-            .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.cardBorder))
-            .frame(maxWidth: 260)
+            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
+            .frame(maxWidth: 240)
 
-            Menu {
-                Button("All priorities") { priorityFilter = nil }
+            HStack(spacing: 6) {
+                FilterChip(title: "All", selected: priorityFilter == nil) { priorityFilter = nil }
                 ForEach(TaskPriority.allCases) { p in
-                    Button(p.rawValue) { priorityFilter = p }
+                    FilterChip(title: p.rawValue, selected: priorityFilter == p) { priorityFilter = p }
                 }
-            } label: {
-                Text(priorityFilter?.rawValue ?? "All priorities")
             }
-            .fixedSize()
 
             Button {
                 showingDateFilterPicker = true
@@ -203,32 +148,68 @@ struct ContentView: View {
                     Label("Any date", systemImage: "calendar")
                 }
             }
+            .buttonStyle(.bordered)
             .fixedSize()
             .popover(isPresented: $showingDateFilterPicker) {
                 DateFilterPopover(dateFilter: $dateFilter, isPresented: $showingDateFilterPicker)
             }
 
-            Picker("", selection: $mode) {
+            Picker("", selection: $panelState.mode.animation(Motion.screen)) {
                 ForEach(BoardMode.allCases) { m in
                     Text(m.rawValue).tag(m)
                 }
             }
             .pickerStyle(.segmented)
+            .labelsHidden()
             .frame(width: 220)
 
             Spacer()
 
-            Toggle(isOn: $noDistractionMode.animation(.easeInOut(duration: 0.15))) {
-                Label("No Distraction", systemImage: "target")
+            Toggle(isOn: $noDistractionMode.animation(Motion.swap)) {
+                Label("No distraction", systemImage: "target")
             }
             .toggleStyle(.button)
             .help("Show only tasks due today or tomorrow")
         }
-        .padding(.horizontal)
+        .padding(.horizontal, 14)
         .padding(.bottom, 10)
+    }
+
+    // MARK: Content
+
+    @ViewBuilder
+    private var content: some View {
+        switch panelState.mode {
+        case .kanban:
+            BoardView(
+                searchText: searchText,
+                priorityFilter: priorityFilter,
+                dateFilter: dateFilter,
+                noDistractionMode: noDistractionMode
+            )
+        case .timeline:
+            TimelineView()
+        case .done:
+            DoneListView(searchText: searchText, priorityFilter: priorityFilter, dateFilter: dateFilter)
+        }
+    }
+
+    // MARK: Footer
+
+    private var footer: some View {
+        HStack(spacing: 4) {
+            Text("\(openCount) open").fontWeight(.semibold).monospacedDigit()
+                + Text(" task\(openCount == 1 ? "" : "s")").foregroundStyle(.secondary)
+            Spacer()
+        }
+        .font(.caption)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .background(.bar)
     }
 }
 
+@MainActor
 struct DateFilterPopover: View {
     @EnvironmentObject private var store: TaskStore
     @Binding var dateFilter: Date?
@@ -269,59 +250,6 @@ struct DateFilterPopover: View {
         .frame(width: 280)
         .onAppear {
             pickedDate = dateFilter ?? Date()
-        }
-    }
-}
-
-struct CompactPillView: View {
-    @EnvironmentObject private var store: TaskStore
-    @EnvironmentObject private var panelState: PanelState
-
-    private var openCount: Int {
-        store.tasks.filter { $0.status != .done }.count
-    }
-
-    private var dueTodayCount: Int {
-        store.tasks.filter { task in
-            guard let due = task.dueDate, task.status != .done else { return false }
-            return Calendar.current.isDateInToday(due)
-        }.count
-    }
-
-    var body: some View {
-        HStack(spacing: 10) {
-            ZStack {
-                Circle()
-                    .fill(Theme.accent.gradient)
-                    .frame(width: 34, height: 34)
-                Image(systemName: "square.grid.3x2.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.white)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(openCount) open task\(openCount == 1 ? "" : "s")")
-                    .font(.system(size: 12, weight: .semibold))
-                Text(dueTodayCount > 0 ? "\(dueTodayCount) due today" : "Nothing due today")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.secondary)
-            }
-
-            Spacer(minLength: 8)
-
-            Image(systemName: "chevron.down.circle.fill")
-                .font(.system(size: 18))
-                .foregroundStyle(.secondary)
-        }
-        .padding(.horizontal, 14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Theme.cardBorder))
-        .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                panelState.isCollapsed = false
-            }
         }
     }
 }

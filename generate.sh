@@ -1,5 +1,5 @@
 #!/bin/bash
-# Regenerates KanbanTimeline.xcodeproj from project.yml.
+# Regenerates PersonalAssistant.xcodeproj from project.yml.
 #
 # xcodegen writes objectVersion=77 (the Xcode 16+ project format), which
 # crashes Xcode 15.x the moment you open Signing & Capabilities
@@ -14,6 +14,6 @@ xcodegen generate
 sed -i '' \
   -e 's/objectVersion = 77;/objectVersion = 56;/' \
   -e 's/preferredProjectObjectVersion = 77;/preferredProjectObjectVersion = 56;/' \
-  KanbanTimeline.xcodeproj/project.pbxproj
+  PersonalAssistant.xcodeproj/project.pbxproj
 
-echo "Generated KanbanTimeline.xcodeproj (objectVersion downgraded for Xcode 15.x compatibility)."
+echo "Generated PersonalAssistant.xcodeproj (objectVersion downgraded for Xcode 15.x compatibility)."

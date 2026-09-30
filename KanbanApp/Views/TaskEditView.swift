@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct TaskEditView: View {
     @EnvironmentObject private var store: TaskStore
     @EnvironmentObject private var editor: EditorState
@@ -52,7 +53,7 @@ struct TaskEditView: View {
                 if sameDayTaskCount >= 3 {
                     Label("\(sameDayTaskCount) tasks already due on this date", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption)
-                        .foregroundStyle(Theme.priorityHigh)
+                        .foregroundStyle(Tag.urgent.color)
                 }
             }
 
@@ -60,7 +61,9 @@ struct TaskEditView: View {
             if hasEstimate {
                 HStack {
                     Stepper("\(estimateHours) hr", value: $estimateHours, in: 0...24)
+                        .monospacedDigit()
                     Stepper("\(estimateMinutes) min", value: $estimateMinutes, in: 0...55, step: 5)
+                        .monospacedDigit()
                 }
             }
 
@@ -72,12 +75,15 @@ struct TaskEditView: View {
                 Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
                 Button("Save", action: save)
+                    .buttonStyle(.borderedProminent)
                     .keyboardShortcut(.defaultAction)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
             }
         }
         .padding()
         .frame(width: 380)
+        .cardStyle(radius: 12)
+        .shadow(radius: 20)
         .onAppear {
             load()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {

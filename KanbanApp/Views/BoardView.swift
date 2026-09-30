@@ -34,6 +34,7 @@ private enum BoardColumn: Identifiable {
     }
 }
 
+@MainActor
 struct BoardView: View {
     @EnvironmentObject private var store: TaskStore
     @EnvironmentObject private var editor: EditorState
@@ -96,32 +97,29 @@ struct BoardView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 6) {
                 Text(column.title.uppercased())
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(column.isMissed ? Theme.priorityHigh : .secondary)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(column.isMissed ? Tag.urgent.color : .secondary)
                     .tracking(0.4)
 
                 Spacer()
 
                 Text("\(columnTasks.count)")
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.caption2.weight(.semibold))
+                    .monospacedDigit()
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
-                    .background(Capsule().fill(Theme.columnBackground))
-                    .overlay(Capsule().stroke(Theme.cardBorder))
+                    .background(.background.secondary, in: Capsule())
             }
             .padding(.horizontal, 4)
 
             VStack(spacing: 8) {
                 if columnTasks.isEmpty {
-                    RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(Theme.cardBorder, style: StrokeStyle(lineWidth: 1, dash: [4, 4]))
-                        .frame(height: 56)
-                        .overlay(
-                            Text("No tasks")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        )
+                    ContentUnavailableView {
+                        Label("No tasks", systemImage: "tray")
+                    }
+                    .scaleEffect(0.7)
+                    .frame(height: 70)
                 } else {
                     ForEach(columnTasks) { task in
                         TaskCardView(task: task, isMissed: column.isMissed)
@@ -132,15 +130,7 @@ struct BoardView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(8)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(column.isMissed ? Theme.missedColumnBackground : Theme.columnBackground)
-            )
-            .overlay {
-                if column.isMissed {
-                    RoundedRectangle(cornerRadius: 10).stroke(Theme.missedBorder)
-                }
-            }
+            .background(.background.secondary, in: RoundedRectangle(cornerRadius: 10))
             .modifier(DropSupport(column: column, store: store))
         }
         .frame(width: 200)
@@ -168,6 +158,7 @@ private struct DropSupport: ViewModifier {
     }
 }
 
+@MainActor
 struct TaskCardView: View {
     let task: TaskItem
     var isMissed: Bool = false
@@ -181,17 +172,17 @@ struct TaskCardView: View {
                     .padding(.top, 2)
 
                 Text(task.title)
-                    .font(.subheadline.weight(.semibold))
+                    .fontWeight(.medium)
                     .lineLimit(2)
 
                 Spacer(minLength: 0)
 
-                PriorityBadge(priority: task.priority)
+                TagBadge(text: task.priority.rawValue, tag: task.priority.tag)
             }
 
             if !task.notes.isEmpty {
                 Text(task.notes)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
@@ -204,40 +195,30 @@ struct TaskCardView: View {
                             .help(task.recurrence.rawValue)
                     }
                 }
-                .font(.caption2)
-                .foregroundStyle(isMissed ? Theme.priorityHigh : .secondary)
+                .font(.caption)
+                .foregroundStyle(isMissed ? Tag.urgent.color : .secondary)
             }
 
             if let minutes = task.estimatedMinutes {
                 Label(minutes.formattedAsDuration, systemImage: "clock")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
         .padding(10)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(RoundedRectangle(cornerRadius: 8).fill(isMissed ? Theme.missedCardBackground : Theme.cardBackground))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(isMissed ? Theme.missedBorder : Theme.cardBorder))
+        .modifier(isMissed ? AnyCardStyle.missed : AnyCardStyle.normal)
     }
 }
 
-struct PriorityBadge: View {
-    let priority: TaskPriority
+/// Lets a card pick between the two card-style modifiers at runtime.
+private enum AnyCardStyle: ViewModifier {
+    case normal, missed
 
-    var body: some View {
-        Text(priority.rawValue)
-            .font(.system(size: 9, weight: .semibold))
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(Capsule().fill(color.opacity(0.16)))
-            .foregroundStyle(color)
-    }
-
-    private var color: Color {
-        switch priority {
-        case .low: return Theme.priorityLow
-        case .medium: return Theme.priorityMedium
-        case .high: return Theme.priorityHigh
+    func body(content: Content) -> some View {
+        switch self {
+        case .normal: content.cardStyle()
+        case .missed: content.missedCardStyle()
         }
     }
 }

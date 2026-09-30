@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct TimelineView: View {
     @State private var monthAnchor: Date = Date()
 
@@ -10,6 +11,7 @@ struct TimelineView: View {
 
 // MARK: - Calendar
 
+@MainActor
 struct CalendarMonthView: View {
     @Binding var monthAnchor: Date
     @EnvironmentObject private var store: TaskStore
@@ -45,21 +47,24 @@ struct CalendarMonthView: View {
         VStack(spacing: 8) {
             HStack {
                 Button(action: { shiftMonth(-1) }) { Image(systemName: "chevron.left") }
+                    .buttonStyle(.borderless)
                 Text(monthAnchor.formatted(.dateTime.month(.wide).year()))
                     .font(.headline)
                 Button(action: { shiftMonth(1) }) { Image(systemName: "chevron.right") }
+                    .buttonStyle(.borderless)
                 Spacer()
             }
             .padding(.horizontal)
 
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 7), spacing: 6) {
                 ForEach(calendar.shortWeekdaySymbols, id: \.self) { symbol in
-                    Text(symbol).font(.caption2).foregroundStyle(.secondary)
+                    Text(symbol).font(.caption).foregroundStyle(.secondary)
                 }
                 ForEach(daysInMonth, id: \.self) { day in
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(calendar.component(.day, from: day))")
-                            .font(.caption2)
+                            .font(.caption)
+                            .monospacedDigit()
                             .foregroundStyle(calendar.isDate(day, equalTo: monthAnchor, toGranularity: .month) ? .primary : .secondary)
                         ForEach(tasks(on: day).prefix(3)) { task in
                             Text(task.title)
@@ -67,12 +72,12 @@ struct CalendarMonthView: View {
                                 .lineLimit(1)
                                 .padding(.horizontal, 4)
                                 .padding(.vertical, 1)
-                                .background(RoundedRectangle(cornerRadius: 4).fill(Theme.accent.opacity(0.18)))
+                                .background(Color.accentColor.opacity(0.18), in: RoundedRectangle(cornerRadius: 4))
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
                     .padding(4)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Theme.columnBackground))
+                    .background(.background.secondary, in: RoundedRectangle(cornerRadius: 6))
                 }
             }
             .padding(.horizontal)

@@ -12,17 +12,17 @@ cd "$(dirname "$0")"
 
 ./generate.sh
 
-xcodebuild -project KanbanTimeline.xcodeproj -scheme KanbanTimeline \
+xcodebuild -project PersonalAssistant.xcodeproj -scheme PersonalAssistant \
   -configuration Release -destination 'platform=macOS' -allowProvisioningUpdates build
 
-APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -iname 'KanbanTimeline-*' -print -quit)/Build/Products/Release/KanbanTimeline.app
+APP_PATH=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 1 -iname 'PersonalAssistant-*' -print -quit)/Build/Products/Release/PersonalAssistant.app
 
-rm -rf /Applications/KanbanTimeline.app
+rm -rf /Applications/PersonalAssistant.app
 cp -R "$APP_PATH" /Applications/
-xattr -dr com.apple.quarantine /Applications/KanbanTimeline.app 2>/dev/null || true
+xattr -dr com.apple.quarantine /Applications/PersonalAssistant.app 2>/dev/null || true
 
-killall KanbanTimeline 2>/dev/null || true
-open /Applications/KanbanTimeline.app
+killall PersonalAssistant 2>/dev/null || true
+open /Applications/PersonalAssistant.app
 
-echo "Installed and launched /Applications/KanbanTimeline.app"
+echo "Installed and launched /Applications/PersonalAssistant.app"
 echo "Look for the grid icon in your menu bar."

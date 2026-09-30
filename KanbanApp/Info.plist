@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Kanban Timeline</string>
+	<string>Personal Assistant</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,8 +25,8 @@
 	<key>NSHumanReadableCopyright</key>
 	<string></string>
 	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud.</string>
+	<string>Personal Assistant can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud.</string>
 	<key>NSRemindersUsageDescription</key>
-	<string>Kanban Timeline can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud.</string>
+	<string>Personal Assistant can sync your tasks to Reminders so due-date alerts also show up on your iPhone via iCloud.</string>
 </dict>
 </plist>

@@ -64,7 +64,7 @@ final class NotificationManager {
         let overdue = pending.filter { $0.dueDate! < today }
 
         let content = UNMutableNotificationContent()
-        content.title = "Kanban Timeline"
+        content.title = "Personal Assistant"
         content.body = dailyBody(dueToday: dueToday, overdue: overdue)
         content.sound = .default
 

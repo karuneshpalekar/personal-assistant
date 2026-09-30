@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct SettingsView: View {
     @EnvironmentObject private var store: TaskStore
     @AppStorage("launchAtLoginEnabled") private var launchAtLoginEnabled: Bool = true
@@ -9,9 +10,9 @@ struct SettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Settings")
-                .font(.headline)
+                .font(.title3.weight(.semibold))
 
-            Toggle("Launch at Login", isOn: $launchAtLoginEnabled)
+            Toggle("Launch at login", isOn: $launchAtLoginEnabled)
                 .onChange(of: launchAtLoginEnabled) { _, newValue in
                     LaunchAtLogin.setEnabled(newValue)
                 }
@@ -36,7 +37,7 @@ struct SettingsView: View {
                     }
                 }
 
-            Text("Mirrors open tasks into a \"Kanban Timeline\" Reminders list, which iCloud syncs to your iPhone — due-date alerts show up there as native notifications.")
+            Text("Mirrors open tasks into a \"Personal Assistant\" Reminders list, which iCloud syncs to your iPhone — due-date alerts show up there as native notifications.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -44,7 +45,7 @@ struct SettingsView: View {
             if remindersPermissionDenied {
                 Text("Reminders access was denied. Enable it in System Settings > Privacy & Security > Reminders.")
                     .font(.caption)
-                    .foregroundStyle(Theme.priorityHigh)
+                    .foregroundStyle(Tag.urgent.color)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }

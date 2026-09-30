@@ -1,5 +1,6 @@
 import SwiftUI
 
+@MainActor
 struct DoneListView: View {
     @EnvironmentObject private var store: TaskStore
     @EnvironmentObject private var editor: EditorState
@@ -33,46 +34,46 @@ struct DoneListView: View {
 
     var body: some View {
         if doneTasks.isEmpty {
-            VStack(spacing: 6) {
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 28))
-                    .foregroundStyle(.secondary)
-                Text("No completed tasks yet")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
+            ContentUnavailableView(
+                "No completed tasks",
+                systemImage: "checkmark.circle",
+                description: Text("Finished tasks show up here")
+            )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             ScrollView {
-                VStack(spacing: 8) {
+                VStack(spacing: 0) {
                     ForEach(doneTasks) { task in
                         DoneRow(task: task)
+                            .contentShape(Rectangle())
                             .onTapGesture { editor.target = .edit(task) }
+                        Divider()
                     }
                 }
-                .padding()
+                .padding(.horizontal)
             }
         }
     }
 }
 
+@MainActor
 private struct DoneRow: View {
     let task: TaskItem
 
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(Theme.priorityLow)
+                .foregroundStyle(Tag.fine.color)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(task.title)
-                    .font(.subheadline.weight(.medium))
+                    .fontWeight(.medium)
                     .strikethrough()
                     .foregroundStyle(.secondary)
 
                 if let due = task.dueDate {
                     Text("Due \(due.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -81,14 +82,12 @@ private struct DoneRow: View {
 
             if let minutes = task.estimatedMinutes {
                 Label(minutes.formattedAsDuration, systemImage: "clock")
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            PriorityBadge(priority: task.priority)
+            TagBadge(text: task.priority.rawValue, tag: task.priority.tag)
         }
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(Theme.cardBackground))
-        .overlay(RoundedRectangle(cornerRadius: 8).stroke(Theme.cardBorder))
+        .padding(.vertical, 9)
     }
 }
